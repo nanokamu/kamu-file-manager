@@ -1,0 +1,13 @@
+{
+    "Servers": {
+        "1": {
+            "Name": "Wallet Local DB Auto",
+            "Group": "Servers",
+            "Host": "db_postgres",
+            "Port": 5432,
+            "MaintenanceDB": "mydatabase",
+            "Username": "myuser",
+            "SSLMode": "prefer"
+        }
+    }
+}
