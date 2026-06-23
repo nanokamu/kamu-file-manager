@@ -1,0 +1,12 @@
+{
+  "moduleFileExtensions": ["js", "json", "ts"],
+  "rootDir": ".",
+  "testEnvironment": "node",
+  "testRegex": ".e2e-spec.ts$",
+  "transform": {
+    "^.+\\.(t|j)s$": "ts-jest"
+  },
+  "transformIgnorePatterns": [
+    "node_modules/(?!(.pnpm/.*(archiver|compress-commons|crc32-stream|is-stream|zip-stream)|archiver|compress-commons|crc32-stream|is-stream|zip-stream)/)"
+  ]
+}

@@ -141,3 +141,14 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+
+.cursor
+.cursorignore
+.cursorindexingignore
+
+file_items
+file_items_test
+file_items_map
+command_notes
+
+build_space

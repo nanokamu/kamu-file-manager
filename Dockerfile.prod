@@ -1,0 +1,33 @@
+# --- frontend build ---
+FROM node:24-alpine AS frontend-build
+ENV CI=true
+WORKDIR /app/frontend
+COPY frontend/package.json frontend/pnpm-lock.yaml ./
+RUN corepack enable && pnpm install --frozen-lockfile
+COPY frontend/ ./
+# Bake API base at build time (matches Nest /api prefix)
+ENV VITE_API_BASE_URL=/api
+RUN pnpm build
+
+# --- backend build ---
+FROM node:24-alpine AS backend-build
+ENV CI=true
+WORKDIR /app/backend
+COPY backend_nestjs/package.json backend_nestjs/pnpm-lock.yaml backend_nestjs/pnpm-workspace.yaml ./
+RUN corepack enable && pnpm install --frozen-lockfile
+COPY backend_nestjs/ ./
+RUN pnpm build
+
+# --- runtime ---
+FROM node:24-alpine
+WORKDIR /app
+ENV NODE_ENV=production
+ENV PORT=3000
+ENV STORAGE_PATH=/data/files
+COPY --from=backend-build /app/backend/dist ./dist
+COPY --from=backend-build /app/backend/node_modules ./node_modules
+COPY --from=backend-build /app/backend/package.json ./
+COPY --from=frontend-build /app/frontend/dist ./public
+EXPOSE 3000
+VOLUME /data/files
+CMD ["node", "dist/main.js"]

@@ -1,0 +1,64 @@
+{
+	"name": "Kamu File Manager",
+	"dockerComposeFile": "docker-compose.yml",
+	"service": "app_node",
+	"workspaceFolder": "/workspaces",
+	"features": {
+		"ghcr.io/devcontainers/features/docker-in-docker:2.16": {},
+		"ghcr.io/devcontainers/features/node:2": {
+			"version": "24", // Use a specific major LTS version for stability
+			"nodeGypDependencies": true // Essential if you use certain React libraries
+		}
+	},
+	"remoteUser": "vscode",
+	// vscode user permissions for the Maven local repository.
+	"postCreateCommand": "sudo chown -R vscode:vscode /home/vscode/.m2",
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				// Java
+				"vscjava.vscode-java-pack",
+				"vmware.vscode-boot-dev-pack",
+				"vscjava.vscode-lombok",
+				// .http
+				"humao.rest-client",
+				// Python
+				"ms-python.python",
+				"ms-python.vscode-pylance",
+				"ms-toolsai.jupyter",
+				"ms-toolsai.jupyter-keymap",
+				"ms-toolsai.jupyter-renderers",
+				// Type Script
+				"dbaeumer.vscode-eslint",
+				// Vitest
+				"vitest.explorer"
+			],
+			"settings": {
+				"java.import.maven.enabled": true,
+				// 1. vscode: F1 + "Java: Update Project Configuration" for re-read the pom.xml
+				// 2. vscode: F1 + "Java: Clean Java Language Server Workspace" for reset everything
+				"java.configuration.updateBuildConfiguration": "automatic",
+				"java.import.projectConfiguration.updatePolicy": "automatic",
+				"java.configuration.runtimes": [
+					{
+						"name": "JavaSE-25",
+						"path": "/usr/lib/jvm/msopenjdk-current",
+						"default": true
+					}
+				],
+				"java.compile.nullAnalysis.mode": "automatic",
+				"editor.formatOnSave": true
+				// "editor.codeActionsOnSave": {
+				// 	"source.organizeImports": "explicit"
+				// }
+			}
+		}
+	},
+	"forwardPorts": [
+		5432, // PostgreSQL
+		8080, // Spring Boot
+		8890, // Jupyter Notebook
+		8900, // React
+		3000 // NestJS
+	]
+}
