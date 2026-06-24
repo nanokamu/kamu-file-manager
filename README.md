@@ -1,7 +1,7 @@
 # Kamu File Manager
 
 <p align="center">
-  <img src="assets/preview_01.png" alt="Preview Image" width="300">
+  <img src="assets/preview_01.png" alt="Preview Image" width="600">
 </p>
 
 Kamu File Manager is a plug-and-play, lightweight, web-based file manager designed to allow easy file access via any web browser. Kamu File Manager is built for effortless deployment and can run on any machine via a Docker image.
