@@ -4,12 +4,11 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.prod
+    user: "${UID:-1000}:${GID:-1000}" # shell:export UID=$(id -u) GID=$(id -g)
     ports:
       # - "8080:3000"
       - "9100:3000"
     environment:
-      # STORAGE_PATH: /data/files
-      # MAX_UPLOAD_SIZE_BYTES: "104857600"
       STORAGE_PATH: ${CONTAINER_STORAGE_PATH:-/data/files}
       MAX_UPLOAD_SIZE_BYTES: "${MAX_UPLOAD_SIZE_BYTES:-104857600}"
     volumes:
