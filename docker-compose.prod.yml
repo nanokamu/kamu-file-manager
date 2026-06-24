@@ -4,6 +4,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.prod
+    user: "${UID:-1000}:${GID:-1000}" # shell:export UID=$(id -u) GID=$(id -g)
     ports:
       # - "8080:3000"
       - "9100:3000"
