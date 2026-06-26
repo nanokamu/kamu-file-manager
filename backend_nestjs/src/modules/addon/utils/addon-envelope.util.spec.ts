@@ -4,6 +4,7 @@ import {
   buildEnvelopeHeader,
   createEnvelopeStream,
   getEnvelopeContentLength,
+  parseAddonEnvelope,
   parseEnvelope,
   serializeEnvelopeMetadata,
 } from './addon-envelope.util';
@@ -93,6 +94,32 @@ describe('addon-envelope.util', () => {
       expect(() => parseEnvelope(header.subarray(0, header.length - 1))).toThrow(
         'Envelope buffer truncated: metadata incomplete',
       );
+    });
+  });
+
+  describe('parseAddonEnvelope', () => {
+    it('round-trips metadata and file bytes', async () => {
+      const fileBytes = Buffer.from('PK\x03\x04fake-zip-content');
+      const envelope = await streamToBuffer(
+        createEnvelopeStream(sampleMeta, Readable.from([fileBytes])),
+      );
+      const parsed = parseAddonEnvelope(envelope);
+
+      expect(parsed.meta).toEqual(sampleMeta);
+      expect(Buffer.from(parsed.fileBytes)).toEqual(fileBytes);
+    });
+
+    it('throws when buffer is too short for length prefix', () => {
+      expect(() => parseAddonEnvelope(new Uint8Array(2))).toThrow(
+        'Envelope buffer too short for metadata length',
+      );
+    });
+
+    it('throws when metadata is truncated', () => {
+      const header = buildEnvelopeHeader(sampleMeta);
+      expect(() =>
+        parseAddonEnvelope(header.subarray(0, header.length - 1)),
+      ).toThrow('Envelope buffer truncated: metadata incomplete');
     });
   });
 });

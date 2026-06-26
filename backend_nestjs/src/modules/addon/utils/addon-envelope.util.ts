@@ -1,5 +1,53 @@
+// Keep parseAddonEnvelope in sync with frontend/src/shared/utils/addon-envelope.util.ts
+
 import { Readable } from 'node:stream';
 import type { ReturnTemplateWithFile } from '../config/addon.types';
+
+export interface AddonEnvelopeMetadata {
+  status: 'ok';
+  filename: string;
+  mimeType: string;
+  message?: string;
+}
+
+export interface ParsedAddonEnvelope {
+  meta: AddonEnvelopeMetadata;
+  fileBytes: Uint8Array;
+}
+
+export function toUint8Array(input: Uint8Array | ArrayBuffer): Uint8Array {
+  return input instanceof Uint8Array ? input : new Uint8Array(input);
+}
+
+export function parseAddonEnvelope(
+  input: Uint8Array | ArrayBuffer,
+): ParsedAddonEnvelope {
+  const bytes = toUint8Array(input);
+
+  if (bytes.length < 4) {
+    throw new Error('Envelope buffer too short for metadata length');
+  }
+
+  const metaLen = new DataView(
+    bytes.buffer,
+    bytes.byteOffset,
+    bytes.byteLength,
+  ).getUint32(0, false);
+  const headerEnd = 4 + metaLen;
+
+  if (bytes.length < headerEnd) {
+    throw new Error('Envelope buffer truncated: metadata incomplete');
+  }
+
+  const meta = JSON.parse(
+    new TextDecoder().decode(bytes.subarray(4, headerEnd)),
+  ) as AddonEnvelopeMetadata;
+
+  return {
+    meta,
+    fileBytes: bytes.subarray(headerEnd),
+  };
+}
 
 export function serializeEnvelopeMetadata(meta: ReturnTemplateWithFile): Buffer {
   return Buffer.from(JSON.stringify(meta), 'utf8');
@@ -41,23 +89,10 @@ export interface ParsedEnvelope {
 }
 
 export function parseEnvelope(buffer: Buffer): ParsedEnvelope {
-  if (buffer.length < 4) {
-    throw new Error('Envelope buffer too short for metadata length');
-  }
-
-  const metaLen = buffer.readUInt32BE(0);
-  const headerEnd = 4 + metaLen;
-
-  if (buffer.length < headerEnd) {
-    throw new Error('Envelope buffer truncated: metadata incomplete');
-  }
-
-  const meta = JSON.parse(
-    buffer.subarray(4, headerEnd).toString('utf8'),
-  ) as ReturnTemplateWithFile;
+  const parsed = parseAddonEnvelope(buffer);
 
   return {
-    meta,
-    fileBytes: buffer.subarray(headerEnd),
+    meta: parsed.meta,
+    fileBytes: Buffer.from(parsed.fileBytes),
   };
 }
