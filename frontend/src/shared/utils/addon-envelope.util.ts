@@ -1,14 +1,9 @@
 // Keep parseAddonEnvelope in sync with backend_nestjs/src/modules/addon/utils/addon-envelope.util.ts
 
-export interface AddonEnvelopeMetadata {
-  status: 'ok';
-  filename: string;
-  mimeType: string;
-  message?: string;
-}
+import type { ReturnTemplateWithFile } from '../types/addon.types';
 
 export interface ParsedAddonEnvelope {
-  meta: AddonEnvelopeMetadata;
+  meta: ReturnTemplateWithFile;
   fileBytes: Uint8Array;
 }
 
@@ -38,7 +33,7 @@ export function parseAddonEnvelope(
 
   const meta = JSON.parse(
     new TextDecoder().decode(bytes.subarray(4, headerEnd)),
-  ) as AddonEnvelopeMetadata;
+  ) as ReturnTemplateWithFile;
 
   return {
     meta,

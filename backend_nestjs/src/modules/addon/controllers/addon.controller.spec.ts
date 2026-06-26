@@ -40,7 +40,7 @@ describe('AddonController', () => {
   const metadata: ReturnTemplateWithFile = {
     status: ReturnStatus.Ok,
     filename: 'archive.zip',
-    mimeType: 'application/zip',
+    mimeType: 'application/octet-stream',
     message: 'done',
   };
   const metaLen = serializeEnvelopeMetadata(metadata).length;

@@ -100,7 +100,7 @@ describe('AddonController (e2e)', () => {
     const { meta, fileBytes } = parseEnvelope(buffer);
     expect(meta.status).toBe(ReturnStatus.Ok);
     expect(meta.filename).toBe('archive.zip');
-    expect(meta.mimeType).toBe('application/zip');
+    expect(meta.mimeType).toBe('application/octet-stream');
     expect(isZipBuffer(fileBytes)).toBe(true);
   });
 

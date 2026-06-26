@@ -1,19 +1,22 @@
 import { describe, expect, it } from 'vitest';
 import {
-  type AddonEnvelopeMetadata,
+  ReturnStatus,
+  type ReturnTemplateWithFile,
+} from '../types/addon.types';
+import {
   parseAddonEnvelope,
   parsedEnvelopeToBlob,
 } from './addon-envelope.util';
 
-const sampleMeta: AddonEnvelopeMetadata = {
-  status: 'ok',
+const sampleMeta: ReturnTemplateWithFile = {
+  status: ReturnStatus.Ok,
   filename: 'archive.zip',
-  mimeType: 'application/zip',
+  mimeType: 'application/octet-stream',
   message: 'done',
 };
 
 function buildTestEnvelope(
-  meta: AddonEnvelopeMetadata,
+  meta: ReturnTemplateWithFile,
   fileBytes: Uint8Array,
 ): Uint8Array {
   const metaBytes = new TextEncoder().encode(JSON.stringify(meta));
@@ -61,7 +64,7 @@ describe('addon-envelope.util', () => {
       const parsed = parseAddonEnvelope(buildTestEnvelope(sampleMeta, fileBytes));
       const blob = parsedEnvelopeToBlob(parsed);
 
-      expect(blob.type).toBe('application/zip');
+      expect(blob.type).toBe('application/octet-stream');
       expect(blob.size).toBe(fileBytes.length);
     });
   });

@@ -12,7 +12,7 @@ import {
 const sampleMeta = {
   status: ReturnStatus.Ok,
   filename: 'archive.zip',
-  mimeType: 'application/zip',
+  mimeType: 'application/octet-stream',
   message: 'done',
 };
 

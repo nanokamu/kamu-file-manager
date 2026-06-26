@@ -1,6 +1,9 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import type { Readable } from 'node:stream';
-import { ADDON_MAX_ENVELOPE_BYTES } from '../config/addon.constants';
+import {
+  ADDON_ENVELOPE_CONTENT_TYPE,
+  ADDON_MAX_ENVELOPE_BYTES,
+} from '../config/addon.constants';
 import type {
   ReturnTemplateMessage,
   ReturnTemplateWithFile,
@@ -13,7 +16,6 @@ import {
   createEnvelopeStream,
   getEnvelopeContentLength,
 } from '../utils/addon-envelope.util';
-import { mimeTypeForArchive } from '../utils/mime-type.util';
 import {
   assertSameParentLevel,
   formatParentForMessage,
@@ -83,7 +85,7 @@ export class AddonService {
     const metadata: ReturnTemplateWithFile = {
       status: ReturnStatus.Ok,
       filename: result.archiveName,
-      mimeType: mimeTypeForArchive('zip'),
+      mimeType: ADDON_ENVELOPE_CONTENT_TYPE,
       message,
     };
     const metaLen = buildEnvelopeHeader(metadata).length - 4;
