@@ -1,5 +1,10 @@
 /* eslint-disable prettier/prettier */
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import type { Request } from 'express';
 import { basename } from 'path';
 import { Readable, type Readable as ReadableType } from 'stream';
@@ -9,6 +14,10 @@ import {
   type StorageConfig,
 } from '../../../core/config/storage.config';
 import { computeBufferChecksum } from '../../../shared/utils/checksum.util';
+import {
+  joinLocator,
+  resolveUniqueArchiveName,
+} from '../../../shared/utils/locator-path.util';
 import {
   createUploadSizeValidator,
   validateUploadSizeHeaders,
@@ -33,6 +42,11 @@ export interface DownloadZipResult {
   archiveName: string;
   checksum: Checksum;
   size: number;
+}
+
+export interface CompressLocatorsToZipFileResult {
+  savedLocator: string;
+  savedName: string;
 }
 
 @Injectable()
@@ -142,6 +156,64 @@ export class FilesService {
   getMetadata(locator: string, userId: string = 'default'): Promise<UnifiedResource> {
     const storage = this.storageAdapter.forUser(userId);
     return storage.getMetadata(locator);
+  }
+
+  async compressLocatorsToZipFile(
+    parentLocator: string,
+    locators: string[],
+    archiveName: string,
+    userId: string = 'default',
+  ): Promise<CompressLocatorsToZipFileResult> {
+    const storage = this.storageAdapter.forUser(userId);
+    const fileLocators: string[] = [];
+    const folderLocators: string[] = [];
+
+    for (const locator of locators) {
+      const resource = await storage.getMetadata(locator);
+      if (resource.type === 'directory') {
+        folderLocators.push(locator);
+      } else {
+        fileLocators.push(locator);
+      }
+    }
+
+    const zipResult = await this.downloadZip(
+      {
+        locators: fileLocators,
+        folderLocators,
+        archiveName,
+      },
+      userId,
+    );
+
+    const zipBuffer = await readStreamToBuffer(zipResult.stream);
+
+    const checkExists = async (fileName: string): Promise<boolean> => {
+      const locator = joinLocator(parentLocator, fileName);
+      try {
+        await storage.getMetadata(locator);
+        return true;
+      } catch (error) {
+        if (error instanceof NotFoundException) {
+          return false;
+        }
+        throw error;
+      }
+    };
+
+    const savedName = await resolveUniqueArchiveName(checkExists, archiveName);
+
+    await storage.upload(parentLocator, savedName, Readable.from(zipBuffer), {
+      mimeType: 'application/zip',
+      size: zipBuffer.length,
+      overwrite: false,
+      checksum: zipResult.checksum,
+    });
+
+    return {
+      savedLocator: joinLocator(parentLocator, savedName),
+      savedName,
+    };
   }
 
   /**

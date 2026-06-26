@@ -1,4 +1,4 @@
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { createHash } from 'crypto';
 import type { Request } from 'express';
@@ -501,5 +501,153 @@ describe('FilesService downloadZip size limit', () => {
         locators: ['unknown.txt'],
       }),
     ).rejects.toThrow(new BadRequestException('File size unavailable'));
+  });
+});
+
+describe('FilesService compressLocatorsToZipFile', () => {
+  let filesService: FilesService;
+  let getMetadataMock: jest.Mock;
+  let listMock: jest.Mock;
+  let downloadMock: jest.Mock;
+  let uploadMock: jest.Mock;
+
+  beforeEach(async () => {
+    getMetadataMock = jest.fn();
+    listMock = jest.fn();
+    downloadMock = jest.fn((locator: string) =>
+      Promise.resolve({
+        stream: Readable.from([Buffer.from(`content:${locator}`)]),
+      }),
+    );
+    uploadMock = jest.fn((_parent, fileName, stream: Readable) =>
+      pipeline(
+        stream,
+        new Writable({
+          write(_chunk, _encoding, callback) {
+            callback();
+          },
+        }),
+      ).then(() => ({
+        path: fileName,
+        name: fileName,
+        type: 'file' as const,
+        size: 10,
+        updatedAt: '2024-01-01',
+      })),
+    );
+
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        FilesService,
+        ...storageTestProviders(createTestStorageConfig(TEST_STORAGE_ROOT)),
+        {
+          provide: STORAGE_ADAPTER,
+          useValue: {
+            forUser: jest.fn(() =>
+              createStorageOperationsMock({
+                getMetadata: getMetadataMock,
+                list: listMock,
+                download: downloadMock,
+                upload: uploadMock,
+              }),
+            ),
+          } satisfies UnifiedStorageAdapter,
+        },
+      ],
+    }).compile();
+
+    filesService = module.get(FilesService);
+  });
+
+  it('saves zip to parent directory with requested name', async () => {
+    getMetadataMock.mockImplementation((locator: string) => {
+      if (locator === 'archive.zip') {
+        return Promise.reject(new NotFoundException());
+      }
+
+      return Promise.resolve(
+        toFileResource(locator, 7, '2024-01-01'),
+      );
+    });
+
+    const result = await filesService.compressLocatorsToZipFile(
+      '',
+      ['a.txt', 'b.txt'],
+      'archive.zip',
+    );
+
+    expect(result).toEqual({
+      savedLocator: 'archive.zip',
+      savedName: 'archive.zip',
+    });
+    expect(uploadMock).toHaveBeenCalledWith(
+      '',
+      'archive.zip',
+      expect.any(Readable),
+      expect.objectContaining({
+        mimeType: 'application/zip',
+        overwrite: false,
+      }),
+    );
+  });
+
+  it('uses datetime suffix when archive name already exists', async () => {
+    getMetadataMock.mockImplementation((locator: string) => {
+      if (locator === 'archive.zip') {
+        return Promise.resolve(
+          toFileResource('archive.zip', 10, '2024-01-01'),
+        );
+      }
+      if (/^archive_\d{8}-\d{6}(?:-\d+)?\.zip$/.test(locator)) {
+        return Promise.reject(new NotFoundException());
+      }
+
+      return Promise.resolve(
+        toFileResource(locator, 7, '2024-01-01'),
+      );
+    });
+
+    const result = await filesService.compressLocatorsToZipFile(
+      '',
+      ['a.txt'],
+      'archive.zip',
+    );
+
+    expect(result.savedName).toMatch(/^archive_\d{8}-\d{6}\.zip$/);
+    expect(result.savedLocator).toBe(result.savedName);
+    expect(uploadMock).toHaveBeenCalledWith(
+      '',
+      result.savedName,
+      expect.any(Readable),
+      expect.objectContaining({ overwrite: false }),
+    );
+  });
+
+  it('expands folder locators into the zip', async () => {
+    getMetadataMock.mockImplementation((locator: string) => {
+      if (locator === 'archive.zip') {
+        return Promise.reject(new NotFoundException());
+      }
+      if (locator === 'folder') {
+        return Promise.resolve(toDirResource('folder', '2024-01-01'));
+      }
+
+      return Promise.resolve(
+        toFileResource(locator, 7, '2024-01-01'),
+      );
+    });
+
+    listMock.mockResolvedValue([
+      toListEntry(toFileResource('folder/nested.txt', 7, '2024-01-01')),
+    ]);
+
+    await filesService.compressLocatorsToZipFile(
+      '',
+      ['folder'],
+      'archive.zip',
+    );
+
+    expect(downloadMock).toHaveBeenCalledWith('folder/nested.txt');
+    expect(uploadMock).toHaveBeenCalled();
   });
 });

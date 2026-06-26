@@ -1,16 +1,55 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  Post,
+  Res,
+  StreamableFile,
+} from '@nestjs/common';
+import type { Response } from 'express';
+import { addonConfig } from '../config/addon.config';
+import { ADDON_ENVELOPE_CONTENT_TYPE } from '../config/addon.constants';
+import type { AddonConfig, ReturnTemplateMessage } from '../config/addon.types';
+import { AddonCompressAsZipDto } from '../dto/addon-compress-as-zip.dto';
 import { AddonDownloadAsZipDto } from '../dto/addon-download-as-zip.dto';
 import { AddonService } from '../services/addon.service';
-import type { AddonDownloadAsZipResponse } from '../services/addon.service';
 
 @Controller()
 export class AddonController {
-  constructor(private readonly addonService: AddonService) {}
+  // eslint-disable-next-line prettier/prettier
+  constructor(private readonly addonService: AddonService) { }
+
+  @Get('addon/config')
+  getConfig(): AddonConfig {
+    return addonConfig;
+  }
 
   @Post('addonDownloadAsZip')
-  addonDownloadAsZip(
+  @HttpCode(200)
+  async addonDownloadAsZip(
     @Body() dto: AddonDownloadAsZipDto,
-  ): AddonDownloadAsZipResponse {
-    return this.addonService.addonDownloadAsZip(dto);
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<StreamableFile> {
+    const { stream, contentLength } =
+      await this.addonService.addonDownloadAsZip(dto);
+
+    res.set({
+      'Content-Type': ADDON_ENVELOPE_CONTENT_TYPE,
+      'Content-Length': String(contentLength),
+    });
+
+    return new StreamableFile(stream, {
+      type: ADDON_ENVELOPE_CONTENT_TYPE,
+      length: contentLength,
+    });
+  }
+
+  @Post('addonCompressAsZip')
+  @HttpCode(200)
+  addonCompressAsZip(
+    @Body() dto: AddonCompressAsZipDto,
+  ): Promise<ReturnTemplateMessage> {
+    return this.addonService.addonCompressAsZip(dto);
   }
 }
