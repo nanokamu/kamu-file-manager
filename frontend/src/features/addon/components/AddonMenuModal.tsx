@@ -74,7 +74,7 @@ export function AddonMenuModal({
           ) : (
             <ul className="divide-y divide-slate-100">
               {templates.map((template) => (
-                <li key={template.apiUrl}>
+                <li key={`${template.apiUrl}:${template.menuName}`}>
                   <button
                     type="button"
                     onClick={() => onSelect(template)}

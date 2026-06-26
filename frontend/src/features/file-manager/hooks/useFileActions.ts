@@ -13,7 +13,9 @@ import {
     moveFile,
     uploadFileWithProgress,
 } from '../api/files.api';
+import { FILE_LIST_AUTO_REFRESH_INTERVAL_MS } from '../config/file-manager.config';
 import type { Crumb, FileItem, FileType } from '../types';
+import { areFileListsEqual } from '../utils/file-list-compare.util';
 import {
     basename,
     joinLocator,
@@ -122,6 +124,7 @@ export function useFileActions() {
     const [files, setFiles] = useState<FileItem[]>([]);
     const [clipboard, setClipboard] = useState<ClipboardState | null>(null);
     const loadRequestIdRef = useRef(0);
+    const lastResourcesRef = useRef<UnifiedResource[]>([]);
 
     const {
         items: operationItems,
@@ -131,7 +134,17 @@ export function useFileActions() {
         runBatch,
     } = useBatchOperationProgress();
 
-    const loadFiles = useCallback(() => {
+    const applyResources = useCallback((resources: UnifiedResource[], folderId: string | null) => {
+        lastResourcesRef.current = resources;
+        setFiles(
+            resources.map((resource) =>
+                mapResourceToFileItem(resource, folderId),
+            ),
+        );
+    }, []);
+
+    const refreshFileList = useCallback((options?: { onlyIfChanged?: boolean }) => {
+        const onlyIfChanged = options?.onlyIfChanged ?? false;
         const requestId = ++loadRequestIdRef.current;
         const folderId = currentFolderId;
 
@@ -141,11 +154,11 @@ export function useFileActions() {
                     return;
                 }
 
-                setFiles(
-                    resources.map((resource) =>
-                        mapResourceToFileItem(resource, folderId),
-                    ),
-                );
+                if (onlyIfChanged && areFileListsEqual(lastResourcesRef.current, resources)) {
+                    return;
+                }
+
+                applyResources(resources, folderId);
             })
             .catch((error) => {
                 if (requestId !== loadRequestIdRef.current) {
@@ -153,9 +166,16 @@ export function useFileActions() {
                 }
 
                 console.error('Failed to load files:', error);
-                setFiles([]);
+                if (!onlyIfChanged) {
+                    lastResourcesRef.current = [];
+                    setFiles([]);
+                }
             });
-    }, [currentFolderId]);
+    }, [currentFolderId, applyResources]);
+
+    const loadFiles = useCallback(() => {
+        refreshFileList();
+    }, [refreshFileList]);
 
     useEffect(() => {
         loadFiles();
@@ -164,6 +184,37 @@ export function useFileActions() {
             loadRequestIdRef.current += 1;
         };
     }, [loadFiles]);
+
+    useEffect(() => {
+        if (FILE_LIST_AUTO_REFRESH_INTERVAL_MS <= 0) {
+            return;
+        }
+
+        const maybeAutoRefresh = () => {
+            if (document.visibilityState !== 'visible' || isOperationModalOpen) {
+                return;
+            }
+            refreshFileList({ onlyIfChanged: true });
+        };
+
+        const intervalId = window.setInterval(
+            maybeAutoRefresh,
+            FILE_LIST_AUTO_REFRESH_INTERVAL_MS,
+        );
+
+        const onVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                maybeAutoRefresh();
+            }
+        };
+
+        document.addEventListener('visibilitychange', onVisibilityChange);
+
+        return () => {
+            window.clearInterval(intervalId);
+            document.removeEventListener('visibilitychange', onVisibilityChange);
+        };
+    }, [refreshFileList, isOperationModalOpen]);
 
     const breadcrumbs = useMemo<Crumb[]>(
         () => breadcrumbsFromPath(currentFolderId),
@@ -538,5 +589,6 @@ export function useFileActions() {
         openInEditor,
         downloadItem,
         downloadFolderAsZipItem,
+        refreshFileList,
     };
 }

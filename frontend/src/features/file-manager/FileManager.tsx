@@ -61,6 +61,11 @@ export default function FileManager() {
         document.title = 'Files';
     }, []);
 
+    const selectedFileIds = useMemo(() => {
+        const validIds = new Set(folderItems.map((item) => item.id));
+        return selectedFiles.filter((id) => validIds.has(id));
+    }, [folderItems, selectedFiles]);
+
     const filteredItems = useMemo(() => {
         if (searchQuery) {
             return searchItems(searchQuery);
@@ -71,8 +76,8 @@ export default function FileManager() {
     const { config: addonConfig } = useAddonConfig();
 
     const selectedItems = useMemo(
-        () => filteredItems.filter((item) => selectedFiles.includes(item.id)),
-        [filteredItems, selectedFiles],
+        () => filteredItems.filter((item) => selectedFileIds.includes(item.id)),
+        [filteredItems, selectedFileIds],
     );
 
     const {
@@ -92,7 +97,7 @@ export default function FileManager() {
         closeResult: closeAddonResult,
     } = useAddonFlow({
         config: addonConfig,
-        selectedLocators: selectedFiles,
+        selectedLocators: selectedFileIds,
         selectedItems,
     });
 
@@ -178,17 +183,17 @@ export default function FileManager() {
     };
 
     const handleCopy = () => {
-        copyItems(selectedFiles);
+        copyItems(selectedFileIds);
         setSelectedFiles([]);
     };
 
     const handleMove = () => {
-        moveItems(selectedFiles);
+        moveItems(selectedFileIds);
         setSelectedFiles([]);
     };
 
     const handleDelete = async () => {
-        const ids = [...selectedFiles];
+        const ids = [...selectedFileIds];
         setSelectedFiles([]);
         await deleteItems(ids);
     };
@@ -211,7 +216,7 @@ export default function FileManager() {
                 <ActionBar
                     searchQuery={searchQuery}
                     setSearchQuery={setSearchQuery}
-                    selectedCount={selectedFiles.length}
+                    selectedCount={selectedFileIds.length}
                     clipboardCount={clipboard?.sources.length ?? 0}
                     onClearSelection={clearSelection}
                     onClearClipboard={clearClipboard}
@@ -221,7 +226,7 @@ export default function FileManager() {
                     onDelete={() => void handleDelete()}
                     onNewFolder={() => setIsCreateFolderOpen(true)}
                     onUpload={uploadFiles}
-                    showAddon={selectedFiles.length > 0 && applicableTemplates.length > 0}
+                    showAddon={selectedFileIds.length > 0 && applicableTemplates.length > 0}
                     onAddon={openAddonMenu}
                 />
 
@@ -232,7 +237,7 @@ export default function FileManager() {
 
                 <FileTableArea
                     items={filteredItems}
-                    selectedFiles={selectedFiles}
+                    selectedFiles={selectedFileIds}
                     openMenuId={openMenuId}
                     onRowClick={handleRowClick}
                     onToggleSelect={handleSelectFile}
@@ -242,7 +247,7 @@ export default function FileManager() {
                         anchorIdRef.current = anchorId;
                     }}
                     onEmptyAreaClick={() => {
-                        if (selectedFiles.length > 0) {
+                        if (selectedFileIds.length > 0) {
                             clearSelection();
                         }
                     }}
@@ -281,7 +286,7 @@ export default function FileManager() {
                         setRenameTarget(null);
                         const success = await renameItem(target, name);
                         if (success) {
-                            if (selectedFiles.includes(target.id)) {
+                            if (selectedFileIds.includes(target.id)) {
                                 setSelectedFiles([]);
                             }
                             if (clipboard?.sources.some((item) => item.id === target.id)) {
