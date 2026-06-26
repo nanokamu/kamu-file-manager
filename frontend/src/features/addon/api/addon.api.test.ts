@@ -34,7 +34,12 @@ const template: ApiTemplate = {
   hasReturnFile: false,
   autoParams: [{ name: 'locators', type: 'string[]' }],
   customParams: [],
-  filterRule: { enabledFile: true, enabledFolder: true },
+  filterRule: {
+    enabledFile: true,
+    filePattern: '.*',
+    enabledFolder: true,
+    folderPattern: '.*',
+  },
 };
 
 describe('addon.api', () => {

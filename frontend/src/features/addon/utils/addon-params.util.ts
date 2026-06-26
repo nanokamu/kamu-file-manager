@@ -13,16 +13,34 @@ export function getDefaultParamValues(
   );
 }
 
+export function matchesLocatorPattern(pattern: string, locator: string): boolean {
+  try {
+    return new RegExp(pattern).test(locator);
+  } catch {
+    return false;
+  }
+}
+
 export function filterApplicableTemplates(
   config: AddonConfig,
   selectedItems: FileItem[],
 ): ApiTemplate[] {
-  const hasFiles = selectedItems.some((item) => item.type !== 'folder');
-  const hasFolders = selectedItems.some((item) => item.type === 'folder');
+  const files = selectedItems.filter((item) => item.type !== 'folder');
+  const folders = selectedItems.filter((item) => item.type === 'folder');
 
   return config.filter((template) => {
-    const { enabledFile, enabledFolder } = template.filterRule;
-    return (!hasFiles || enabledFile) && (!hasFolders || enabledFolder);
+    const { enabledFile, filePattern, enabledFolder, folderPattern } = template.filterRule;
+
+    const filesOk =
+      files.length === 0 ||
+      (enabledFile && files.every((file) => matchesLocatorPattern(filePattern, file.id)));
+
+    const foldersOk =
+      folders.length === 0 ||
+      (enabledFolder &&
+        folders.every((folder) => matchesLocatorPattern(folderPattern, folder.id)));
+
+    return filesOk && foldersOk;
   });
 }
 

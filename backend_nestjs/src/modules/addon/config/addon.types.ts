@@ -19,7 +19,9 @@ export interface CustomParam {
 
 export interface FilterRule {
   enabledFile: boolean;
+  filePattern: string; // Regex pattern for file locator
   enabledFolder: boolean;
+  folderPattern: string; // Regex pattern for folder locator
 }
 
 export interface ApiTemplate {

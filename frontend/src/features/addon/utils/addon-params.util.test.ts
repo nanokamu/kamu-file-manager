@@ -33,7 +33,12 @@ const baseTemplate: ApiTemplate = {
       options: [{ value: 'zip', label: 'ZIP' }],
     },
   ],
-  filterRule: { enabledFile: true, enabledFolder: true },
+  filterRule: {
+    enabledFile: true,
+    filePattern: '.*',
+    enabledFolder: true,
+    folderPattern: '.*',
+  },
 };
 
 function makeItem(id: string, type: FileItem['type']): FileItem {
@@ -73,12 +78,22 @@ describe('addon-params.util', () => {
       {
         ...baseTemplate,
         menuName: 'files only',
-        filterRule: { enabledFile: true, enabledFolder: false },
+        filterRule: {
+          enabledFile: true,
+          filePattern: '.*',
+          enabledFolder: false,
+          folderPattern: '.*',
+        },
       },
       {
         ...baseTemplate,
         menuName: 'folders only',
-        filterRule: { enabledFile: false, enabledFolder: true },
+        filterRule: {
+          enabledFile: false,
+          filePattern: '.*',
+          enabledFolder: true,
+          folderPattern: '.*',
+        },
       },
     ];
 
@@ -104,6 +119,54 @@ describe('addon-params.util', () => {
       expect(names).toContain('download as zip');
       expect(names).toContain('folders only');
       expect(names).not.toContain('files only');
+    });
+
+    it('excludes templates when file locators do not match filePattern', () => {
+      const patternConfig = [
+        {
+          ...baseTemplate,
+          menuName: 'txt files only',
+          filterRule: {
+            enabledFile: true,
+            filePattern: '\\.txt$',
+            enabledFolder: true,
+            folderPattern: '.*',
+          },
+        },
+      ];
+      const matching = [makeItem('report.txt', 'document')];
+      const nonMatching = [makeItem('report.pdf', 'pdf')];
+
+      expect(filterApplicableTemplates(patternConfig, matching).map((t) => t.menuName)).toContain(
+        'txt files only',
+      );
+      expect(
+        filterApplicableTemplates(patternConfig, nonMatching).map((t) => t.menuName),
+      ).not.toContain('txt files only');
+    });
+
+    it('excludes templates when folder locators do not match folderPattern', () => {
+      const patternConfig = [
+        {
+          ...baseTemplate,
+          menuName: 'projects folder only',
+          filterRule: {
+            enabledFile: true,
+            filePattern: '.*',
+            enabledFolder: true,
+            folderPattern: '^projects/',
+          },
+        },
+      ];
+      const matching = [makeItem('projects/design', 'folder')];
+      const nonMatching = [makeItem('assets/icons', 'folder')];
+
+      expect(filterApplicableTemplates(patternConfig, matching).map((t) => t.menuName)).toContain(
+        'projects folder only',
+      );
+      expect(
+        filterApplicableTemplates(patternConfig, nonMatching).map((t) => t.menuName),
+      ).not.toContain('projects folder only');
     });
   });
 

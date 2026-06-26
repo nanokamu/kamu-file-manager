@@ -28,7 +28,9 @@ export interface CustomParam {
 
 export interface FilterRule {
   enabledFile: boolean;
+  filePattern: string;
   enabledFolder: boolean;
+  folderPattern: string;
 }
 
 export interface ApiTemplate {
