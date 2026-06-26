@@ -70,10 +70,10 @@ export class AddonService {
     dto: { locators: string[]; archiveName: string },
     message: string,
   ): Promise<AddonEnvelopeResult> {
-    const result = await this.filesService.downloadZip({
-      locators: dto.locators,
-      archiveName: dto.archiveName,
-    });
+    const result = await this.filesService.downloadZipFromLocators(
+      dto.locators,
+      dto.archiveName,
+    );
 
     if (result.size > ADDON_MAX_ENVELOPE_BYTES) {
       throw new BadRequestException({

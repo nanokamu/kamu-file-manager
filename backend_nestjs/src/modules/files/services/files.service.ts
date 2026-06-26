@@ -158,6 +158,25 @@ export class FilesService {
     return storage.getMetadata(locator);
   }
 
+  async downloadZipFromLocators(
+    locators: string[],
+    archiveName: string,
+    userId: string = 'default',
+  ): Promise<DownloadZipResult> {
+    const { fileLocators, folderLocators, folderZipPaths } =
+      await this.partitionLocatorsForZip(locators, userId);
+
+    return this.downloadZip(
+      {
+        locators: fileLocators,
+        folderLocators,
+        ...(folderLocators.length > 0 && { folderZipPaths }),
+        archiveName,
+      },
+      userId,
+    );
+  }
+
   async compressLocatorsToZipFile(
     parentLocator: string,
     locators: string[],
@@ -165,27 +184,10 @@ export class FilesService {
     userId: string = 'default',
   ): Promise<CompressLocatorsToZipFileResult> {
     const storage = this.storageAdapter.forUser(userId);
-    const fileLocators: string[] = [];
-    const folderLocators: string[] = [];
-    const folderZipPaths: string[] = [];
 
-    for (const locator of locators) {
-      const resource = await storage.getMetadata(locator);
-      if (resource.type === 'directory') {
-        folderLocators.push(locator);
-        folderZipPaths.push(resource.name);
-      } else {
-        fileLocators.push(locator);
-      }
-    }
-
-    const zipResult = await this.downloadZip(
-      {
-        locators: fileLocators,
-        folderLocators,
-        ...(folderLocators.length > 0 && { folderZipPaths }),
-        archiveName,
-      },
+    const zipResult = await this.downloadZipFromLocators(
+      locators,
+      archiveName,
       userId,
     );
 
@@ -342,6 +344,32 @@ export class FilesService {
    * @returns Zip entries paired with the combined byte size of all files.
    * @throws BadRequestException when `folderLocator` is not a directory.
    */
+  private async partitionLocatorsForZip(
+    locators: string[],
+    userId: string = 'default',
+  ): Promise<{
+    fileLocators: string[];
+    folderLocators: string[];
+    folderZipPaths: string[];
+  }> {
+    const storage = this.storageAdapter.forUser(userId);
+    const fileLocators: string[] = [];
+    const folderLocators: string[] = [];
+    const folderZipPaths: string[] = [];
+
+    for (const locator of locators) {
+      const resource = await storage.getMetadata(locator);
+      if (resource.type === 'directory') {
+        folderLocators.push(locator);
+        folderZipPaths.push(resource.name);
+      } else {
+        fileLocators.push(locator);
+      }
+    }
+
+    return { fileLocators, folderLocators, folderZipPaths };
+  }
+
   private async collectFolderZipEntries(
     storage: StorageOperations,
     folderLocator: string,

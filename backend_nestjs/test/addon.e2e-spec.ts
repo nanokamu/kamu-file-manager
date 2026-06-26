@@ -104,6 +104,28 @@ describe('AddonController (e2e)', () => {
     expect(isZipBuffer(fileBytes)).toBe(true);
   });
 
+  it('/api/addonDownloadAsZip (POST) returns envelope with folder contents', async () => {
+    const { status, contentType, contentLength, buffer } = await fetchEnvelope(
+      app,
+      '/addonDownloadAsZip',
+      {
+        locators: ['nestitems'],
+        archiveName: 'folder-archive.zip',
+        archiveType: 'zip',
+      },
+    );
+
+    expect(status).toBe(200);
+    expect(contentType).toBe(ADDON_ENVELOPE_CONTENT_TYPE);
+    expect(contentLength).toBe(String(buffer.length));
+
+    const { meta, fileBytes } = parseEnvelope(buffer);
+    expect(meta.status).toBe(ReturnStatus.Ok);
+    expect(meta.filename).toBe('folder-archive.zip');
+    expect(meta.mimeType).toBe('application/octet-stream');
+    expect(isZipBuffer(fileBytes)).toBe(true);
+  });
+
   it('/api/addonCompressAsZip (POST) saves zip locally and returns JSON', async () => {
     const response = await request(app.getHttpServer())
       .post(apiPath('/addonCompressAsZip'))

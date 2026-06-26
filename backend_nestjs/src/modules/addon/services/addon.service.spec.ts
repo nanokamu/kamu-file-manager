@@ -15,13 +15,13 @@ import {
 describe('AddonService', () => {
   let addonService: AddonService;
   let filesService: {
-    downloadZip: jest.Mock;
+    downloadZipFromLocators: jest.Mock;
     compressLocatorsToZipFile: jest.Mock;
   };
 
   beforeEach(async () => {
     filesService = {
-      downloadZip: jest.fn(),
+      downloadZipFromLocators: jest.fn(),
       compressLocatorsToZipFile: jest.fn(),
     };
 
@@ -50,7 +50,7 @@ describe('AddonService', () => {
   describe('addonDownloadAsZip', () => {
     it('returns envelope with correct content length', async () => {
       const fileBytes = Buffer.from('PK\x03\x04zip');
-      filesService.downloadZip.mockResolvedValue({
+      filesService.downloadZipFromLocators.mockResolvedValue({
         stream: Readable.from([fileBytes]),
         archiveName: 'archive.zip',
         checksum: null,
@@ -94,7 +94,7 @@ describe('AddonService', () => {
     });
 
     it('rejects archives exceeding addon size limit', async () => {
-      filesService.downloadZip.mockResolvedValue({
+      filesService.downloadZipFromLocators.mockResolvedValue({
         stream: Readable.from([Buffer.alloc(0)]),
         archiveName: 'huge.zip',
         checksum: null,
@@ -108,6 +108,48 @@ describe('AddonService', () => {
           archiveType: 'zip',
         }),
       ).rejects.toThrow(BadRequestException);
+    });
+
+    it('passes folder locators to downloadZipFromLocators', async () => {
+      const fileBytes = Buffer.from('PK\x03\x04zip');
+      filesService.downloadZipFromLocators.mockResolvedValue({
+        stream: Readable.from([fileBytes]),
+        archiveName: 'archive.zip',
+        checksum: null,
+        size: fileBytes.length,
+      });
+
+      await addonService.addonDownloadAsZip({
+        locators: ['nestitems'],
+        archiveName: 'archive.zip',
+        archiveType: 'zip',
+      });
+
+      expect(filesService.downloadZipFromLocators).toHaveBeenCalledWith(
+        ['nestitems'],
+        'archive.zip',
+      );
+    });
+
+    it('passes mixed file and folder locators to downloadZipFromLocators', async () => {
+      const fileBytes = Buffer.from('PK\x03\x04zip');
+      filesService.downloadZipFromLocators.mockResolvedValue({
+        stream: Readable.from([fileBytes]),
+        archiveName: 'archive.zip',
+        checksum: null,
+        size: fileBytes.length,
+      });
+
+      await addonService.addonDownloadAsZip({
+        locators: ['a.txt', 'nestitems'],
+        archiveName: 'archive.zip',
+        archiveType: 'zip',
+      });
+
+      expect(filesService.downloadZipFromLocators).toHaveBeenCalledWith(
+        ['a.txt', 'nestitems'],
+        'archive.zip',
+      );
     });
   });
 
