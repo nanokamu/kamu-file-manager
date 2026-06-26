@@ -167,11 +167,13 @@ export class FilesService {
     const storage = this.storageAdapter.forUser(userId);
     const fileLocators: string[] = [];
     const folderLocators: string[] = [];
+    const folderZipPaths: string[] = [];
 
     for (const locator of locators) {
       const resource = await storage.getMetadata(locator);
       if (resource.type === 'directory') {
         folderLocators.push(locator);
+        folderZipPaths.push(resource.name);
       } else {
         fileLocators.push(locator);
       }
@@ -181,6 +183,7 @@ export class FilesService {
       {
         locators: fileLocators,
         folderLocators,
+        ...(folderLocators.length > 0 && { folderZipPaths }),
         archiveName,
       },
       userId,

@@ -49,7 +49,9 @@ export function parseAddonEnvelope(
   };
 }
 
-export function serializeEnvelopeMetadata(meta: ReturnTemplateWithFile): Buffer {
+export function serializeEnvelopeMetadata(
+  meta: ReturnTemplateWithFile,
+): Buffer {
   return Buffer.from(JSON.stringify(meta), 'utf8');
 }
 
@@ -92,7 +94,7 @@ export function parseEnvelope(buffer: Buffer): ParsedEnvelope {
   const parsed = parseAddonEnvelope(buffer);
 
   return {
-    meta: parsed.meta,
+    meta: parsed.meta as ReturnTemplateWithFile,
     fileBytes: Buffer.from(parsed.fileBytes),
   };
 }

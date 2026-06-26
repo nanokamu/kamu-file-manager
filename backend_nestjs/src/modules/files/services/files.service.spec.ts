@@ -624,6 +624,8 @@ describe('FilesService compressLocatorsToZipFile', () => {
   });
 
   it('expands folder locators into the zip', async () => {
+    const downloadZipSpy = jest.spyOn(filesService, 'downloadZip');
+
     getMetadataMock.mockImplementation((locator: string) => {
       if (locator === 'archive.zip') {
         return Promise.reject(new NotFoundException());
@@ -647,7 +649,60 @@ describe('FilesService compressLocatorsToZipFile', () => {
       'archive.zip',
     );
 
+    expect(downloadZipSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        folderLocators: ['folder'],
+        folderZipPaths: ['folder'],
+      }),
+      'default',
+    );
     expect(downloadMock).toHaveBeenCalledWith('folder/nested.txt');
     expect(uploadMock).toHaveBeenCalled();
+
+    downloadZipSpy.mockRestore();
+  });
+
+  it('preserves folder names when compressing files and folders together', async () => {
+    const downloadZipSpy = jest.spyOn(filesService, 'downloadZip');
+
+    getMetadataMock.mockImplementation((locator: string) => {
+      if (locator === 'archive.zip') {
+        return Promise.reject(new NotFoundException());
+      }
+      if (locator === 'nestfolder') {
+        return Promise.resolve(toDirResource('nestfolder', '2024-01-01'));
+      }
+
+      return Promise.resolve(
+        toFileResource(locator, 7, '2024-01-01'),
+      );
+    });
+
+    listMock.mockImplementation((locator: string) => {
+      if (locator === 'nestfolder') {
+        return Promise.resolve([
+          toListEntry(toFileResource('nestfolder/inner.txt', 7, '2024-01-01')),
+        ]);
+      }
+
+      return Promise.resolve([]);
+    });
+
+    await filesService.compressLocatorsToZipFile(
+      '',
+      ['outsider1.txt', 'outsider2.txt', 'nestfolder'],
+      'archive.zip',
+    );
+
+    expect(downloadZipSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        locators: ['outsider1.txt', 'outsider2.txt'],
+        folderLocators: ['nestfolder'],
+        folderZipPaths: ['nestfolder'],
+      }),
+      'default',
+    );
+
+    downloadZipSpy.mockRestore();
   });
 });
