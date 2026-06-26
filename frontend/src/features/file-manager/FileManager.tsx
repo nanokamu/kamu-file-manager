@@ -1,6 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { MessageBoxModal } from '../../shared/components/MessageBoxModal';
 import { OperationProgressModal } from '../../shared/components/OperationProgressModal';
+import { AddonDownloadModal } from '../addon/components/AddonDownloadModal';
+import { AddonMenuModal } from '../addon/components/AddonMenuModal';
+import { AddonParamsModal } from '../addon/components/AddonParamsModal';
+import { useAddonConfig } from '../addon/hooks/useAddonConfig';
+import { useAddonFlow } from '../addon/hooks/useAddonFlow';
 import type { FileItem } from './types';
 import { ActionBar } from './components/ActionBar';
 import { Breadcrumbs } from './components/Breadcrumbs';
@@ -62,6 +67,34 @@ export default function FileManager() {
         }
         return folderItems;
     }, [searchQuery, folderItems, searchItems]);
+
+    const { config: addonConfig } = useAddonConfig();
+
+    const selectedItems = useMemo(
+        () => filteredItems.filter((item) => selectedFiles.includes(item.id)),
+        [filteredItems, selectedFiles],
+    );
+
+    const {
+        step: addonStep,
+        applicableTemplates,
+        selectedTemplate,
+        paramValues,
+        downloadProgress,
+        isSubmitting: isAddonSubmitting,
+        resultMessage: addonResultMessage,
+        openMenu: openAddonMenu,
+        closeFlow: closeAddonFlow,
+        selectTemplate: selectAddonTemplate,
+        goBackToMenu: goBackToAddonMenu,
+        updateParamValue: updateAddonParamValue,
+        confirmParams: confirmAddonParams,
+        closeResult: closeAddonResult,
+    } = useAddonFlow({
+        config: addonConfig,
+        selectedLocators: selectedFiles,
+        selectedItems,
+    });
 
     useEffect(() => {
         anchorIdRef.current = null;
@@ -188,6 +221,8 @@ export default function FileManager() {
                     onDelete={() => void handleDelete()}
                     onNewFolder={() => setIsCreateFolderOpen(true)}
                     onUpload={uploadFiles}
+                    showAddon={selectedFiles.length > 0 && applicableTemplates.length > 0}
+                    onAddon={openAddonMenu}
                 />
 
                 <Breadcrumbs
@@ -271,6 +306,39 @@ export default function FileManager() {
                     title={messageBox.title}
                     description={messageBox.description}
                     variant="error"
+                />
+            )}
+
+            <AddonMenuModal
+                isOpen={addonStep === 'menu'}
+                templates={applicableTemplates}
+                onSelect={selectAddonTemplate}
+                onClose={closeAddonFlow}
+            />
+
+            <AddonParamsModal
+                isOpen={addonStep === 'params'}
+                template={selectedTemplate}
+                values={paramValues}
+                isSubmitting={isAddonSubmitting}
+                onValueChange={updateAddonParamValue}
+                onConfirm={() => void confirmAddonParams()}
+                onBack={goBackToAddonMenu}
+                onClose={closeAddonFlow}
+            />
+
+            <AddonDownloadModal
+                isOpen={addonStep === 'downloading'}
+                progress={downloadProgress}
+            />
+
+            {addonResultMessage && (
+                <MessageBoxModal
+                    isOpen
+                    onClose={closeAddonResult}
+                    title={addonResultMessage.title}
+                    description={addonResultMessage.description}
+                    variant={addonResultMessage.variant}
                 />
             )}
 

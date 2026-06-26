@@ -15,6 +15,8 @@ interface ActionBarProps {
     onDelete?: () => void;
     onNewFolder?: () => void;
     onUpload?: (files: File[]) => void;
+    showAddon?: boolean;
+    onAddon?: () => void;
 }
 
 const iconButtonBase =
@@ -63,6 +65,8 @@ export function ActionBar({
     onDelete,
     onNewFolder,
     onUpload,
+    showAddon = false,
+    onAddon,
 }: ActionBarProps) {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
@@ -127,6 +131,13 @@ export function ActionBar({
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
                                 </svg>
                             </IconActionButton>
+                            {showAddon && (
+                                <IconActionButton label="Addon" onClick={onAddon} className={secondaryButtonClass}>
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z" />
+                                    </svg>
+                                </IconActionButton>
+                            )}
                         </>
                     )}
                     {(selectedCount > 0 || clipboardCount > 0) && (

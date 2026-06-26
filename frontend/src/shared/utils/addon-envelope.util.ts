@@ -48,5 +48,5 @@ export async function parseAddonEnvelopeResponse(
 }
 
 export function parsedEnvelopeToBlob(parsed: ParsedAddonEnvelope): Blob {
-  return new Blob([parsed.fileBytes], { type: parsed.meta.mimeType });
+  return new Blob([parsed.fileBytes as BlobPart], { type: parsed.meta.mimeType });
 }
