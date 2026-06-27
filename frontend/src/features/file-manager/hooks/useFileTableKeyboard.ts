@@ -332,12 +332,20 @@ export function useFileTableKeyboard({
     }, [disabled, processKeyDown]);
 
     useEffect(() => {
-        if (disabled || items.length === 0) {
+        if (disabled) {
             return;
         }
 
         const active = document.activeElement;
         const isInsideGrid = containerRef.current?.contains(active);
+
+        if (items.length === 0) {
+            if (hasDefaultPageFocus() || isInsideGrid) {
+                containerRef.current?.focus({ preventScroll: true });
+            }
+            return;
+        }
+
         if (hasDefaultPageFocus() || isInsideGrid) {
             containerRef.current?.focus({ preventScroll: true });
         }
