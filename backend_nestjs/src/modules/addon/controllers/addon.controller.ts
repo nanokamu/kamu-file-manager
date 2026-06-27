@@ -63,7 +63,7 @@ export class AddonController {
     // dto.archiveName;
     const returnDummy: ReturnTemplateMessage = {
       status: ReturnStatus.Ok,
-      message: `Call with Blank Locator Success: ${dto.locators.toString()}, ${dto.archiveName}`,
+      message: `Call with Blank Locator Success: ${dto.locators.length}, ${dto.archiveName}`,
     };
     return Promise.resolve(returnDummy);
   }

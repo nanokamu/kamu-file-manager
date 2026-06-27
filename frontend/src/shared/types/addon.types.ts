@@ -42,6 +42,7 @@ export interface ApiTemplate {
   returnMode: 'envelope' | 'direct';
   hasFileListRefresh: boolean;
   fileListRefreshDelayMs: number;
+  allowBlankAutoParams: boolean; // When true, locators auto param may be []
   autoParams: AutoParam[];
   customParams: CustomParam[];
   filterRule: FilterRule;

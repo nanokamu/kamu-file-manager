@@ -17,6 +17,7 @@ const baseTemplate: ApiTemplate = {
   returnMode: 'envelope',
   hasFileListRefresh: false,
   fileListRefreshDelayMs: 0,
+  allowBlankAutoParams: false,
   autoParams: [{ name: 'locators', type: 'string[]' }],
   customParams: [
     {
@@ -121,6 +122,22 @@ describe('addon-params.util', () => {
       expect(names).toContain('download as zip');
       expect(names).toContain('folders only');
       expect(names).not.toContain('files only');
+    });
+
+    it('returns no templates when selection is empty and none allow blank auto params', () => {
+      expect(filterApplicableTemplates(config, [])).toEqual([]);
+    });
+
+    it('returns only allowBlankAutoParams templates when selection is empty', () => {
+      const blankTemplate: ApiTemplate = {
+        ...baseTemplate,
+        menuName: 'blank locator call',
+        allowBlankAutoParams: true,
+      };
+      const mixedConfig = [baseTemplate, blankTemplate];
+
+      const names = filterApplicableTemplates(mixedConfig, []).map((t) => t.menuName);
+      expect(names).toEqual(['blank locator call']);
     });
 
     it('excludes templates when file locators do not match filePattern', () => {

@@ -8,6 +8,7 @@
         "returnMode": "direct",
         "hasFileListRefresh": true,
         "fileListRefreshDelayMs": 5000,
+        "allowBlankAutoParams": false,
         "autoParams": [
             {
                 "name": "locators",
@@ -39,6 +40,7 @@
         "returnMode": "envelope",
         "hasFileListRefresh": false,
         "fileListRefreshDelayMs": 0,
+        "allowBlankAutoParams": false,
         "autoParams": [
             {
                 "name": "locators",
@@ -103,6 +105,7 @@
         "returnMode": "envelope",
         "hasFileListRefresh": false,
         "fileListRefreshDelayMs": 0,
+        "allowBlankAutoParams": false,
         "autoParams": [
             {
                 "name": "locators",
@@ -167,6 +170,7 @@
         "returnMode": "envelope",
         "hasFileListRefresh": false,
         "fileListRefreshDelayMs": 0,
+        "allowBlankAutoParams": false,
         "autoParams": [
             {
                 "name": "locators",
@@ -231,6 +235,7 @@
         "returnMode": "direct",
         "hasFileListRefresh": true,
         "fileListRefreshDelayMs": 5000,
+        "allowBlankAutoParams": false,
         "autoParams": [
             {
                 "name": "locators",
@@ -262,6 +267,7 @@
         "returnMode": "direct",
         "hasFileListRefresh": true,
         "fileListRefreshDelayMs": 5000,
+        "allowBlankAutoParams": false,
         "autoParams": [
             {
                 "name": "locators",
@@ -293,6 +299,7 @@
         "returnMode": "direct",
         "hasFileListRefresh": true,
         "fileListRefreshDelayMs": 5000,
+        "allowBlankAutoParams": false,
         "autoParams": [
             {
                 "name": "locators",
@@ -324,6 +331,7 @@
         "returnMode": "direct",
         "hasFileListRefresh": true,
         "fileListRefreshDelayMs": 5000,
+        "allowBlankAutoParams": false,
         "autoParams": [
             {
                 "name": "locators",
@@ -355,6 +363,7 @@
         "returnMode": "direct",
         "hasFileListRefresh": true,
         "fileListRefreshDelayMs": 5000,
+        "allowBlankAutoParams": false,
         "autoParams": [
             {
                 "name": "locators",
@@ -386,6 +395,7 @@
         "returnMode": "direct",
         "hasFileListRefresh": true,
         "fileListRefreshDelayMs": 5000,
+        "allowBlankAutoParams": false,
         "autoParams": [
             {
                 "name": "locators",

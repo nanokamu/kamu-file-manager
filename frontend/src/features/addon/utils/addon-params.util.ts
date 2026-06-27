@@ -25,6 +25,10 @@ export function filterApplicableTemplates(
   config: AddonConfig,
   selectedItems: FileItem[],
 ): ApiTemplate[] {
+  if (selectedItems.length === 0) {
+    return config.filter((template) => template.allowBlankAutoParams);
+  }
+
   const files = selectedItems.filter((item) => item.type !== 'folder');
   const folders = selectedItems.filter((item) => item.type === 'folder');
 

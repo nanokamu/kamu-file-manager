@@ -33,6 +33,7 @@ export interface ApiTemplate {
   returnMode: 'envelope' | 'direct'; // direct: return json, envelope: return envelope with file
   hasFileListRefresh: boolean; // Whether to refresh the file list
   fileListRefreshDelayMs: number; // Delay time in milliseconds to refresh the file list
+  allowBlankAutoParams: boolean; // When true, locators auto param may be []
   autoParams: AutoParam[];
   customParams: CustomParam[]; // Custom parameters for the API
   filterRule: FilterRule; // Filter rules for the API

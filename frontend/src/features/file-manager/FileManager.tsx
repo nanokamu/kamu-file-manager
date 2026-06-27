@@ -280,7 +280,7 @@ export default function FileManager() {
                     onRequestDelete={handleRequestDelete}
                     onNewFolder={() => setIsCreateFolderOpen(true)}
                     onUpload={uploadFiles}
-                    showAddon={selectedFileIds.length > 0 && applicableTemplates.length > 0}
+                    showAddon={applicableTemplates.length > 0}
                     onAddon={openAddonMenu}
                 />
 

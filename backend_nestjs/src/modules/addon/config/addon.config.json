@@ -8,6 +8,7 @@
         "returnMode": "direct",
         "hasFileListRefresh": true,
         "fileListRefreshDelayMs": 2000,
+        "allowBlankAutoParams": false,
         "autoParams": [
             {
                 "name": "locators",
@@ -39,6 +40,7 @@
         "returnMode": "envelope",
         "hasFileListRefresh": false,
         "fileListRefreshDelayMs": 0,
+        "allowBlankAutoParams": false,
         "autoParams": [
             {
                 "name": "locators",
@@ -103,6 +105,7 @@
         "returnMode": "envelope",
         "hasFileListRefresh": false,
         "fileListRefreshDelayMs": 0,
+        "allowBlankAutoParams": false,
         "autoParams": [
             {
                 "name": "locators",
@@ -167,6 +170,7 @@
         "returnMode": "envelope",
         "hasFileListRefresh": false,
         "fileListRefreshDelayMs": 0,
+        "allowBlankAutoParams": false,
         "autoParams": [
             {
                 "name": "locators",
@@ -229,8 +233,9 @@
         "hasReturnMessage": true,
         "hasReturnFile": false,
         "returnMode": "direct",
-        "hasFileListRefresh": true,
+        "hasFileListRefresh": false,
         "fileListRefreshDelayMs": 2000,
+        "allowBlankAutoParams": true,
         "autoParams": [
             {
                 "name": "locators",
