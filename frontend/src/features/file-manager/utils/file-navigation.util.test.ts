@@ -16,11 +16,11 @@ describe('resolveNavigationIndex', () => {
         expect(resolveNavigationIndex(items, null, ['a', 'b'])).toBe(1);
     });
 
-    it('falls back to index 0 when focus and selection are absent', () => {
-        expect(resolveNavigationIndex(items, null, [])).toBe(0);
+    it('falls back to index -1 when focus and selection are absent', () => {
+        expect(resolveNavigationIndex(items, null, [])).toBe(-1);
     });
 
     it('ignores stale focused or selected ids', () => {
-        expect(resolveNavigationIndex(items, 'z', ['y'])).toBe(0);
+        expect(resolveNavigationIndex(items, 'z', ['y'])).toBe(-1);
     });
 });

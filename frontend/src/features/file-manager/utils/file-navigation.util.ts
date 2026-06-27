@@ -19,5 +19,5 @@ export function resolveNavigationIndex<T extends { id: string }>(
             return index;
         }
     }
-    return 0;
+    return -1;
 }

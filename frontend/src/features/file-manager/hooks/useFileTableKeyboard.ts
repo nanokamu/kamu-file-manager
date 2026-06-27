@@ -1,5 +1,6 @@
 import {
     useCallback,
+    useEffect,
     useRef,
     useState,
     type KeyboardEvent,
@@ -27,6 +28,8 @@ interface UseFileTableKeyboardOptions {
     onRename: (item: FileItem) => void;
 }
 
+const NAVIGATION_KEYS = new Set(['ArrowUp', 'ArrowDown', 'Home', 'End']);
+
 function isEditableTarget(target: EventTarget | null): boolean {
     if (!(target instanceof HTMLElement)) {
         return false;
@@ -40,7 +43,7 @@ function isEditableTarget(target: EventTarget | null): boolean {
     );
 }
 
-function isModifierKey(event: KeyboardEvent): boolean {
+function isModifierKey(event: { ctrlKey: boolean; metaKey: boolean }): boolean {
     return event.ctrlKey || event.metaKey;
 }
 
@@ -58,6 +61,11 @@ function shouldClaimGridFocus(target: EventTarget | null): boolean {
         return false;
     }
     return true;
+}
+
+function hasDefaultPageFocus(): boolean {
+    const active = document.activeElement;
+    return !active || active === document.body;
 }
 
 export function useFileTableKeyboard({
@@ -150,8 +158,8 @@ export function useFileTableKeyboard({
         scrollFocusedRowIntoView(id);
     }, [items, scrollFocusedRowIntoView]);
 
-    const handleKeyDown = useCallback(
-        (event: KeyboardEvent<HTMLElement>) => {
+    const processKeyDown = useCallback(
+        (event: globalThis.KeyboardEvent) => {
             if (disabled || isEditableTarget(event.target)) {
                 return;
             }
@@ -207,7 +215,14 @@ export function useFileTableKeyboard({
                 return;
             }
 
-            if ((key === 'Delete' || key === 'Backspace') && selectedFiles.length > 0) {
+            // Keep as reference, in case we need to use backspace to delete file.
+            // if ((key === 'Delete' || key === 'Backspace') && selectedFiles.length > 0) {
+            //     event.preventDefault();
+            //     onRequestDelete();
+            //     return;
+            // }
+
+            if ((key === 'Delete') && selectedFiles.length > 0) {
                 event.preventDefault();
                 onRequestDelete();
                 return;
@@ -251,7 +266,8 @@ export function useFileTableKeyboard({
             if (key === 'ArrowDown') {
                 nextIndex = currentIndex < 0 ? 0 : Math.min(currentIndex + 1, items.length - 1);
             } else if (key === 'ArrowUp') {
-                nextIndex = currentIndex < 0 ? 0 : Math.max(currentIndex - 1, 0);
+                nextIndex =
+                    currentIndex < 0 ? items.length - 1 : Math.max(currentIndex - 1, 0);
             } else if (key === 'Home') {
                 nextIndex = 0;
             } else if (key === 'End') {
@@ -285,6 +301,47 @@ export function useFileTableKeyboard({
             selectedFiles,
         ],
     );
+
+    const handleKeyDown = useCallback(
+        (event: KeyboardEvent<HTMLElement>) => {
+            processKeyDown(event.nativeEvent);
+        },
+        [processKeyDown],
+    );
+
+    useEffect(() => {
+        if (disabled) {
+            return;
+        }
+
+        const onDocumentKeyDown = (event: globalThis.KeyboardEvent) => {
+            if (isEditableTarget(event.target)) {
+                return;
+            }
+            if (containerRef.current?.contains(event.target as Node)) {
+                return;
+            }
+            if (!NAVIGATION_KEYS.has(event.key)) {
+                return;
+            }
+            processKeyDown(event);
+        };
+
+        document.addEventListener('keydown', onDocumentKeyDown);
+        return () => document.removeEventListener('keydown', onDocumentKeyDown);
+    }, [disabled, processKeyDown]);
+
+    useEffect(() => {
+        if (disabled || items.length === 0) {
+            return;
+        }
+
+        const active = document.activeElement;
+        const isInsideGrid = containerRef.current?.contains(active);
+        if (hasDefaultPageFocus() || isInsideGrid) {
+            containerRef.current?.focus({ preventScroll: true });
+        }
+    }, [disabled, items]);
 
     const getContainerProps = useCallback(
         () => ({
