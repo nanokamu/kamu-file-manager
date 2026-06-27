@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { ApiError } from '../../../api/client';
 import type { UnifiedResource } from '../../../api/types';
 import { useBatchOperationProgress } from '../../../shared/hooks/useBatchOperationProgress';
@@ -120,7 +121,22 @@ function apiParentLocator(currentFolderId: string | null): string {
 }
 
 export function useFileActions() {
-    const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
+    const [searchParams, setSearchParams] = useSearchParams();
+    const locatorParam = searchParams.get('locator');
+    const currentFolderId = locatorParam ? normalizeLocator(locatorParam) : null;
+
+    const setFolderLocator = useCallback((id: string | null) => {
+        setSearchParams((prev) => {
+            const next = new URLSearchParams(prev);
+            if (id) {
+                next.set('locator', id);
+            } else {
+                next.delete('locator');
+            }
+            return next;
+        });
+    }, [setSearchParams]);
+
     const [files, setFiles] = useState<FileItem[]>([]);
     const [clipboard, setClipboard] = useState<ClipboardState | null>(null);
     const loadRequestIdRef = useRef(0);
@@ -231,14 +247,14 @@ export function useFileActions() {
     }, [files]);
 
     const navigateToFolder = useCallback((id: string | null) => {
-        setCurrentFolderId(id);
-    }, []);
+        setFolderLocator(id);
+    }, [setFolderLocator]);
 
     const openFolder = useCallback((item: FileItem) => {
         if (item.type === 'folder') {
-            setCurrentFolderId(item.id);
+            setFolderLocator(item.id);
         }
-    }, []);
+    }, [setFolderLocator]);
 
     const getItemLabel = useCallback((locator: string) => {
         return files.find((file) => file.id === locator)?.name ?? basename(locator);
