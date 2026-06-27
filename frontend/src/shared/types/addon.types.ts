@@ -39,7 +39,7 @@ export interface ApiTemplate {
   apiUrl: string;
   hasReturnMessage: boolean;
   hasReturnFile: boolean;
-  returnMode?: 'envelope' | 'direct';
+  returnMode: 'envelope' | 'direct';
   autoParams: AutoParam[];
   customParams: CustomParam[];
   filterRule: FilterRule;

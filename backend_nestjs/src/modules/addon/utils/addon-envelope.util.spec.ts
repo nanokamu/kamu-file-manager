@@ -1,5 +1,5 @@
 import { Readable } from 'node:stream';
-import { ReturnStatus } from '../config/addon.types';
+import { ReturnStatus, ReturnTemplateWithFile } from '../config/addon.types';
 import {
   buildEnvelopeHeader,
   createEnvelopeStream,
@@ -9,7 +9,7 @@ import {
   serializeEnvelopeMetadata,
 } from './addon-envelope.util';
 
-const sampleMeta = {
+const sampleMeta: ReturnTemplateWithFile = {
   status: ReturnStatus.Ok,
   filename: 'archive.zip',
   mimeType: 'application/octet-stream',
@@ -73,7 +73,10 @@ describe('addon-envelope.util', () => {
     it('content length matches envelope size', async () => {
       const fileBytes = Buffer.alloc(512, 0xab);
       const metaLen = serializeEnvelopeMetadata(sampleMeta).length;
-      const expectedLength = getEnvelopeContentLength(metaLen, fileBytes.length);
+      const expectedLength = getEnvelopeContentLength(
+        metaLen,
+        fileBytes.length,
+      );
       const envelope = await streamToBuffer(
         createEnvelopeStream(sampleMeta, Readable.from([fileBytes])),
       );
@@ -91,9 +94,9 @@ describe('addon-envelope.util', () => {
 
     it('throws when metadata is truncated', () => {
       const header = buildEnvelopeHeader(sampleMeta);
-      expect(() => parseEnvelope(header.subarray(0, header.length - 1))).toThrow(
-        'Envelope buffer truncated: metadata incomplete',
-      );
+      expect(() =>
+        parseEnvelope(header.subarray(0, header.length - 1)),
+      ).toThrow('Envelope buffer truncated: metadata incomplete');
     });
   });
 

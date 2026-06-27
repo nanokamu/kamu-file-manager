@@ -32,6 +32,7 @@ const template: ApiTemplate = {
   apiUrl: '/api/addonCompressAsZip',
   hasReturnMessage: true,
   hasReturnFile: false,
+  returnMode: 'direct',
   autoParams: [{ name: 'locators', type: 'string[]' }],
   customParams: [],
   filterRule: {

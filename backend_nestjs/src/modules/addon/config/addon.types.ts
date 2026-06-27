@@ -30,7 +30,9 @@ export interface ApiTemplate {
   apiUrl: string; // API URL
   hasReturnMessage: boolean; // Whether to return a message
   hasReturnFile: boolean; // Whether to return a file
-  returnMode?: 'envelope' | 'direct';
+  returnMode: 'envelope' | 'direct'; // direct: return json, envelope: return envelope with file
+  hasFileListRefresh: boolean; // Whether to refresh the file list
+  fileListRefreshDelayMs: number; // Delay time in milliseconds to refresh the file list
   autoParams: AutoParam[];
   customParams: CustomParam[]; // Custom parameters for the API
   filterRule: FilterRule; // Filter rules for the API

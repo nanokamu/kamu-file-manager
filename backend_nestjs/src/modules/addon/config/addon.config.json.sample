@@ -6,8 +6,6 @@
         "hasReturnMessage": true,
         "hasReturnFile": false,
         "returnMode": "direct",
-        "hasFileListRefresh": true,
-        "fileListRefreshDelayMs": 5000,
         "autoParams": [
             {
                 "name": "locators",
@@ -37,8 +35,6 @@
         "hasReturnMessage": true,
         "hasReturnFile": true,
         "returnMode": "envelope",
-        "hasFileListRefresh": false,
-        "fileListRefreshDelayMs": 0,
         "autoParams": [
             {
                 "name": "locators",
@@ -101,8 +97,6 @@
         "hasReturnMessage": true,
         "hasReturnFile": true,
         "returnMode": "envelope",
-        "hasFileListRefresh": false,
-        "fileListRefreshDelayMs": 0,
         "autoParams": [
             {
                 "name": "locators",
@@ -165,8 +159,6 @@
         "hasReturnMessage": true,
         "hasReturnFile": true,
         "returnMode": "envelope",
-        "hasFileListRefresh": false,
-        "fileListRefreshDelayMs": 0,
         "autoParams": [
             {
                 "name": "locators",
@@ -219,6 +211,180 @@
             "enabledFile": true,
             "filePattern": "[.]txt$",
             "enabledFolder": false,
+            "folderPattern": ".*"
+        }
+    },
+    {
+        "menuName": "Compress as zip 1",
+        "apiType": "POST",
+        "apiUrl": "/api/addonCompressAsZip",
+        "hasReturnMessage": true,
+        "hasReturnFile": false,
+        "returnMode": "direct",
+        "autoParams": [
+            {
+                "name": "locators",
+                "type": "string[]"
+            }
+        ],
+        "customParams": [
+            {
+                "name": "archive_name",
+                "label": "Archive Name",
+                "type": "string",
+                "inputType": "text",
+                "defaultValue": "archive.zip"
+            }
+        ],
+        "filterRule": {
+            "enabledFile": true,
+            "filePattern": ".*",
+            "enabledFolder": true,
+            "folderPattern": ".*"
+        }
+    },
+    {
+        "menuName": "Compress as zip 2",
+        "apiType": "POST",
+        "apiUrl": "/api/addonCompressAsZip",
+        "hasReturnMessage": true,
+        "hasReturnFile": false,
+        "returnMode": "direct",
+        "autoParams": [
+            {
+                "name": "locators",
+                "type": "string[]"
+            }
+        ],
+        "customParams": [
+            {
+                "name": "archive_name",
+                "label": "Archive Name",
+                "type": "string",
+                "inputType": "text",
+                "defaultValue": "archive.zip"
+            }
+        ],
+        "filterRule": {
+            "enabledFile": true,
+            "filePattern": ".*",
+            "enabledFolder": true,
+            "folderPattern": ".*"
+        }
+    },
+    {
+        "menuName": "Compress as zip 3",
+        "apiType": "POST",
+        "apiUrl": "/api/addonCompressAsZip",
+        "hasReturnMessage": true,
+        "hasReturnFile": false,
+        "returnMode": "direct",
+        "autoParams": [
+            {
+                "name": "locators",
+                "type": "string[]"
+            }
+        ],
+        "customParams": [
+            {
+                "name": "archive_name",
+                "label": "Archive Name",
+                "type": "string",
+                "inputType": "text",
+                "defaultValue": "archive.zip"
+            }
+        ],
+        "filterRule": {
+            "enabledFile": true,
+            "filePattern": ".*",
+            "enabledFolder": true,
+            "folderPattern": ".*"
+        }
+    },
+    {
+        "menuName": "Compress as zip 4",
+        "apiType": "POST",
+        "apiUrl": "/api/addonCompressAsZip",
+        "hasReturnMessage": true,
+        "hasReturnFile": false,
+        "returnMode": "direct",
+        "autoParams": [
+            {
+                "name": "locators",
+                "type": "string[]"
+            }
+        ],
+        "customParams": [
+            {
+                "name": "archive_name",
+                "label": "Archive Name",
+                "type": "string",
+                "inputType": "text",
+                "defaultValue": "archive.zip"
+            }
+        ],
+        "filterRule": {
+            "enabledFile": true,
+            "filePattern": ".*",
+            "enabledFolder": true,
+            "folderPattern": ".*"
+        }
+    },
+    {
+        "menuName": "Compress as zip 5",
+        "apiType": "POST",
+        "apiUrl": "/api/addonCompressAsZip",
+        "hasReturnMessage": true,
+        "hasReturnFile": false,
+        "returnMode": "direct",
+        "autoParams": [
+            {
+                "name": "locators",
+                "type": "string[]"
+            }
+        ],
+        "customParams": [
+            {
+                "name": "archive_name",
+                "label": "Archive Name",
+                "type": "string",
+                "inputType": "text",
+                "defaultValue": "archive.zip"
+            }
+        ],
+        "filterRule": {
+            "enabledFile": true,
+            "filePattern": ".*",
+            "enabledFolder": true,
+            "folderPattern": ".*"
+        }
+    },
+    {
+        "menuName": "Compress as zip 6",
+        "apiType": "POST",
+        "apiUrl": "/api/addonCompressAsZip",
+        "hasReturnMessage": true,
+        "hasReturnFile": false,
+        "returnMode": "direct",
+        "autoParams": [
+            {
+                "name": "locators",
+                "type": "string[]"
+            }
+        ],
+        "customParams": [
+            {
+                "name": "archive_name",
+                "label": "Archive Name",
+                "type": "string",
+                "inputType": "text",
+                "defaultValue": "archive.zip"
+            }
+        ],
+        "filterRule": {
+            "enabledFile": true,
+            "filePattern": ".*",
+            "enabledFolder": true,
             "folderPattern": ".*"
         }
     }

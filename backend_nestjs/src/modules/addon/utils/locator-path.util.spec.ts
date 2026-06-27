@@ -18,9 +18,9 @@ describe('locator-path.util (addon)', () => {
     });
 
     it('rejects locators from different directories', () => {
-      expect(() =>
-        assertSameParentLevel(['a.txt', 'folder/b.txt']),
-      ).toThrow(BadRequestException);
+      expect(() => assertSameParentLevel(['a.txt', 'folder/b.txt'])).toThrow(
+        BadRequestException,
+      );
 
       try {
         assertSameParentLevel(['a.txt', 'folder/b.txt']);
@@ -54,14 +54,17 @@ describe('locator-path.util (shared)', () => {
 
   describe('resolveUniqueArchiveName', () => {
     it('returns original name when it does not exist', async () => {
-      const name = await resolveUniqueArchiveName(async () => false, 'archive.zip');
+      const name = await resolveUniqueArchiveName(
+        () => Promise.resolve(false),
+        'archive.zip',
+      );
       expect(name).toBe('archive.zip');
     });
 
     it('appends datetime suffix when name exists', async () => {
       const existing = new Set(['archive.zip']);
       const name = await resolveUniqueArchiveName(
-        async (candidate) => existing.has(candidate),
+        (candidate) => Promise.resolve(existing.has(candidate)),
         'archive.zip',
       );
 
@@ -70,14 +73,14 @@ describe('locator-path.util (shared)', () => {
     });
 
     it('retries with numeric suffix when datetime name also exists', async () => {
-      const name = await resolveUniqueArchiveName(async (candidate) => {
+      const name = await resolveUniqueArchiveName((candidate) => {
         if (candidate === 'archive.zip') {
-          return true;
+          return Promise.resolve(true);
         }
         if (/^archive_\d{8}-\d{6}\.zip$/.test(candidate)) {
-          return true;
+          return Promise.resolve(true);
         }
-        return false;
+        return Promise.resolve(false);
       }, 'archive.zip');
 
       expect(name).toMatch(/^archive_\d{8}-\d{6}-\d+\.zip$/);
