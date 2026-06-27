@@ -1,4 +1,4 @@
-import { useEffect, useId } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { ApiTemplate } from '../../../shared/types/addon.types';
 
@@ -19,6 +19,32 @@ export function AddonMenuModal({
   onClose,
 }: AddonMenuModalProps) {
   const titleId = useId();
+  const [activeIndex, setActiveIndex] = useState(-1);
+  const [menuSnapshot, setMenuSnapshot] = useState<string | null>(null);
+  const itemRefs = useRef<(HTMLButtonElement | null)[]>([]);
+
+  const currentSnapshot = isOpen
+    ? templates.map((template) => `${template.apiUrl}:${template.menuName}`).join('|')
+    : null;
+
+  if (currentSnapshot !== menuSnapshot) {
+    setMenuSnapshot(currentSnapshot);
+    setActiveIndex(-1);
+  }
+
+  const safeActiveIndex =
+    templates.length === 0 ? 0 : Math.min(activeIndex, templates.length - 1);
+
+  if (isOpen && templates.length > 0 && activeIndex >= templates.length) {
+    setActiveIndex(templates.length - 1);
+  }
+
+  useEffect(() => {
+    if (!isOpen || safeActiveIndex < 0) {
+      return;
+    }
+    itemRefs.current[safeActiveIndex]?.scrollIntoView({ block: 'nearest' });
+  }, [isOpen, safeActiveIndex]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -27,7 +53,42 @@ export function AddonMenuModal({
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
+        event.preventDefault();
         onClose();
+        return;
+      }
+
+      if (templates.length === 0) {
+        return;
+      }
+
+      if (event.key === 'ArrowDown') {
+        event.preventDefault();
+        setActiveIndex((index) =>
+          index < 0
+            ? Math.min(1, templates.length - 1)
+            : Math.min(index + 1, templates.length - 1),
+        );
+        return;
+      }
+
+      if (event.key === 'ArrowUp') {
+        event.preventDefault();
+        setActiveIndex((index) =>
+          index < 0 ? templates.length - 1 : Math.max(index - 1, 0),
+        );
+        return;
+      }
+
+      if (event.key === 'Enter') {
+        if (safeActiveIndex < 0) {
+          return;
+        }
+        event.preventDefault();
+        const template = templates[safeActiveIndex];
+        if (template) {
+          onSelect(template);
+        }
       }
     };
 
@@ -36,7 +97,7 @@ export function AddonMenuModal({
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, onSelect, templates, safeActiveIndex]);
 
   if (!isOpen) {
     return null;
@@ -72,18 +133,27 @@ export function AddonMenuModal({
               No addon functions available for this selection.
             </p>
           ) : (
-            <ul className="divide-y divide-slate-100">
-              {templates.map((template) => (
+            <ul role="menu" className="divide-y divide-slate-100">
+              {templates.map((template, index) => {
+                const isActive = safeActiveIndex >= 0 && index === safeActiveIndex;
+
+                return (
                 <li key={`${template.apiUrl}:${template.menuName}`}>
                   <button
+                    ref={(element) => {
+                      itemRefs.current[index] = element;
+                    }}
                     type="button"
+                    role="menuitem"
+                    aria-selected={isActive}
                     onClick={() => onSelect(template)}
-                    className={`w-full px-4 py-3 text-left text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 ${focusRingClass}`}
+                    className={`w-full px-4 py-3 text-left text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 ${isActive ? 'bg-slate-100' : ''} ${focusRingClass}`}
                   >
                     {template.menuName}
                   </button>
                 </li>
-              ))}
+                );
+              })}
             </ul>
           )}
         </div>
