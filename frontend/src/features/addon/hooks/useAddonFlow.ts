@@ -62,8 +62,10 @@ export function useAddonFlow({
   const scheduledLocatorRef = useRef<string | null>(null);
   const onFileListRefreshRef = useRef(onFileListRefresh);
 
-  currentFolderIdRef.current = currentFolderId;
-  onFileListRefreshRef.current = onFileListRefresh;
+  // Already moved to useEffect below.
+  // But keep it here for reference.
+  // currentFolderIdRef.current = currentFolderId;
+  // onFileListRefreshRef.current = onFileListRefresh;
 
   const clearRefreshTimeout = useCallback(() => {
     if (refreshTimeoutRef.current !== null) {
@@ -94,8 +96,13 @@ export function useAddonFlow({
   );
 
   useEffect(() => {
+    currentFolderIdRef.current = currentFolderId;
     clearRefreshTimeout();
   }, [currentFolderId, clearRefreshTimeout]);
+
+  useEffect(() => {
+    onFileListRefreshRef.current = onFileListRefresh;
+  });
 
   useEffect(() => {
     return () => {
