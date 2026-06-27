@@ -257,5 +257,37 @@
             "enabledFolder": true,
             "folderPattern": ".*"
         }
+    },
+    {
+        "menuName": "Redirect to Another URL",
+        "apiType": "POST",
+        "apiUrl": "/api/addonRedirectToAnotherUrl",
+        "hasReturnMessage": true,
+        "hasReturnFile": false,
+        "returnMode": "redirect",
+        "hasFileListRefresh": false,
+        "fileListRefreshDelayMs": 2000,
+        "allowBlankAutoParams": true,
+        "autoParams": [
+            {
+                "name": "locators",
+                "type": "string[]"
+            }
+        ],
+        "customParams": [
+            {
+                "name": "note",
+                "label": "Note",
+                "type": "string",
+                "inputType": "text",
+                "defaultValue": "Default Note"
+            }
+        ],
+        "filterRule": {
+            "enabledFile": true,
+            "filePattern": ".*",
+            "enabledFolder": true,
+            "folderPattern": ".*"
+        }
     }
 ]

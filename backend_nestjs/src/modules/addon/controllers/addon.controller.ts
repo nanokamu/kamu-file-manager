@@ -10,12 +10,21 @@ import {
 import type { Response } from 'express';
 import { addonConfig } from '../config/addon.config';
 import { ADDON_ENVELOPE_CONTENT_TYPE } from '../config/addon.constants';
-import type { AddonConfig, ReturnTemplateMessage } from '../config/addon.types';
+import type {
+  AddonConfig,
+  ReturnTemplateMessage,
+  ReturnTemplateRedirect,
+} from '../config/addon.types';
 import { AddonCompressAsZipDto } from '../dto/addon-compress-as-zip.dto';
 import { AddonDownloadAsZipDto } from '../dto/addon-download-as-zip.dto';
 import { AddonService } from '../services/addon.service';
 import { AddonCallWithBlankLocatorDto } from '../dto/addon-call-with-blank-locator.dto';
-import { ReturnStatus } from '../config/addon.types';
+import {
+  RedirectMode,
+  RedirectType,
+  ReturnStatus,
+} from '../config/addon.types';
+import { AddonCallWithRedirectDto } from '../dto/addon-call-with-redirect.dto';
 
 @Controller()
 export class AddonController {
@@ -64,6 +73,22 @@ export class AddonController {
     const returnDummy: ReturnTemplateMessage = {
       status: ReturnStatus.Ok,
       message: `Call with Blank Locator Success: ${dto.locators.length}, ${dto.archiveName}`,
+    };
+    return Promise.resolve(returnDummy);
+  }
+
+  @Post('addonCallWithRedirect')
+  @HttpCode(200)
+  addonCallWithRedirect(
+    @Body() dto: AddonCallWithRedirectDto,
+  ): Promise<ReturnTemplateRedirect> {
+    // dto.archiveName;
+    const returnDummy: ReturnTemplateRedirect = {
+      status: ReturnStatus.Ok,
+      redirectUrl: '/editor?locator=docs%2Fbinary_test.txt',
+      redirectType: RedirectType.SameSite,
+      redirectMode: RedirectMode.NewTab,
+      message: `Call with Redirect Success: ${dto.locators.length}, ${dto.archiveName}`,
     };
     return Promise.resolve(returnDummy);
   }

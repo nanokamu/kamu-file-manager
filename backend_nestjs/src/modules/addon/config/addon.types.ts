@@ -30,7 +30,11 @@ export interface ApiTemplate {
   apiUrl: string; // API URL
   hasReturnMessage: boolean; // Whether to return a message
   hasReturnFile: boolean; // Whether to return a file
-  returnMode: 'envelope' | 'direct'; // direct: return json, envelope: return envelope with file
+  // returnMode:
+  // direct: return json,
+  // envelope: return envelope with file,
+  // redirect: redirect to another url
+  returnMode: 'envelope' | 'direct' | 'redirect';
   hasFileListRefresh: boolean; // Whether to refresh the file list
   fileListRefreshDelayMs: number; // Delay time in milliseconds to refresh the file list
   allowBlankAutoParams: boolean; // When true, locators auto param may be []
@@ -54,6 +58,26 @@ export interface ReturnTemplateMessage {
   message: string;
 }
 
+export enum RedirectType {
+  SameSite = 'same-site', // /editor, /editor?locator=x
+  CrossSite = 'cross-site', // https://external.com/...
+}
+
+export enum RedirectMode {
+  Redirect = 'redirect', // window.location.href = redirectUrl;
+  Replace = 'replace', // window.location.replace(redirectUrl);
+  NewTab = 'new-tab', // window.open(redirectUrl, '_blank', 'noopener,noreferrer');
+  NewWindow = 'new-window', // window.open(redirectUrl, '_blank', 'noopener,noreferrer');
+}
+
+export interface ReturnTemplateRedirect {
+  status: ReturnStatus.Ok;
+  redirectUrl: string;
+  redirectType: RedirectType; // same-site or cross-site
+  redirectMode: RedirectMode; // redirect, replace, new-tab, new-window
+  message?: string; // optional toast before navigate
+}
+
 export interface ReturnTemplateWithFile {
   status: ReturnStatus.Ok;
   filename: string;
@@ -64,6 +88,7 @@ export interface ReturnTemplateWithFile {
 export type ReturnTemplateJson =
   | ReturnTemplateError
   | ReturnTemplateMessage
+  | ReturnTemplateRedirect
   | ReturnTemplateWithFile;
 
 export type AddonConfig = ApiTemplate[];
