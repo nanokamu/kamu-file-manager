@@ -33,6 +33,8 @@ const template: ApiTemplate = {
   hasReturnMessage: true,
   hasReturnFile: false,
   returnMode: 'direct',
+  hasFileListRefresh: true,
+  fileListRefreshDelayMs: 5000,
   autoParams: [{ name: 'locators', type: 'string[]' }],
   customParams: [],
   filterRule: {

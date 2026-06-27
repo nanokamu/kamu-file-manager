@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ApiTemplate } from '../../../shared/types/addon.types';
 import { isReturnTemplateError } from '../../../shared/types/addon.types';
 import {
@@ -26,6 +26,7 @@ interface UseAddonFlowOptions {
   config: ApiTemplate[] | null;
   selectedLocators: string[];
   selectedItems: FileItem[];
+  onFileListRefresh?: () => void;
 }
 
 function triggerBrowserDownload(blob: Blob, filename: string) {
@@ -41,6 +42,7 @@ export function useAddonFlow({
   config,
   selectedLocators,
   selectedItems,
+  onFileListRefresh,
 }: UseAddonFlowOptions) {
   const [step, setStep] = useState<AddonFlowStep>('idle');
   const [selectedTemplate, setSelectedTemplate] = useState<ApiTemplate | null>(null);
@@ -48,6 +50,35 @@ export function useAddonFlow({
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [resultMessage, setResultMessage] = useState<AddonResultMessage | null>(null);
+  const refreshTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearRefreshTimeout = useCallback(() => {
+    if (refreshTimeoutRef.current !== null) {
+      clearTimeout(refreshTimeoutRef.current);
+      refreshTimeoutRef.current = null;
+    }
+  }, []);
+
+  const scheduleFileListRefresh = useCallback(
+    (template: ApiTemplate) => {
+      if (!template.hasFileListRefresh || !onFileListRefresh) {
+        return;
+      }
+
+      clearRefreshTimeout();
+      refreshTimeoutRef.current = setTimeout(() => {
+        refreshTimeoutRef.current = null;
+        onFileListRefresh();
+      }, template.fileListRefreshDelayMs);
+    },
+    [clearRefreshTimeout, onFileListRefresh],
+  );
+
+  useEffect(() => {
+    return () => {
+      clearRefreshTimeout();
+    };
+  }, [clearRefreshTimeout]);
 
   const applicableTemplates = useMemo(() => {
     if (!config) {
@@ -133,6 +164,7 @@ export function useAddonFlow({
           description: parsed.meta.message ?? `Downloaded ${parsed.meta.filename}`,
           variant: 'default',
         });
+        scheduleFileListRefresh(selectedTemplate);
         setStep('result');
         return;
       }
@@ -155,6 +187,7 @@ export function useAddonFlow({
           description,
           variant: 'default',
         });
+        scheduleFileListRefresh(selectedTemplate);
       }
       setStep('result');
     } catch (error) {
@@ -174,7 +207,7 @@ export function useAddonFlow({
     } finally {
       setIsSubmitting(false);
     }
-  }, [selectedTemplate, selectedLocators, paramValues]);
+  }, [selectedTemplate, selectedLocators, paramValues, scheduleFileListRefresh]);
 
   return {
     step,

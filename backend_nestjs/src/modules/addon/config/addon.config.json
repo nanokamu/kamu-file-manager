@@ -7,7 +7,7 @@
         "hasReturnFile": false,
         "returnMode": "direct",
         "hasFileListRefresh": true,
-        "fileListRefreshDelayMs": 5000,
+        "fileListRefreshDelayMs": 2000,
         "autoParams": [
             {
                 "name": "locators",

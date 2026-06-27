@@ -15,6 +15,8 @@ const baseTemplate: ApiTemplate = {
   hasReturnMessage: true,
   hasReturnFile: true,
   returnMode: 'envelope',
+  hasFileListRefresh: false,
+  fileListRefreshDelayMs: 0,
   autoParams: [{ name: 'locators', type: 'string[]' }],
   customParams: [
     {

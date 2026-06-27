@@ -38,6 +38,7 @@ export default function FileManager() {
         openInEditor,
         downloadItem,
         downloadFolderAsZipItem,
+        refreshFileList,
     } = useFileActions();
 
     const [searchQuery, setSearchQuery] = useState('');
@@ -94,6 +95,7 @@ export default function FileManager() {
         config: addonConfig,
         selectedLocators: selectedFileIds,
         selectedItems,
+        onFileListRefresh: refreshFileList,
     });
 
     useEffect(() => {

@@ -40,6 +40,8 @@ export interface ApiTemplate {
   hasReturnMessage: boolean;
   hasReturnFile: boolean;
   returnMode: 'envelope' | 'direct';
+  hasFileListRefresh: boolean;
+  fileListRefreshDelayMs: number;
   autoParams: AutoParam[];
   customParams: CustomParam[];
   filterRule: FilterRule;
