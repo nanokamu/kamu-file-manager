@@ -4,7 +4,7 @@ import { act, createElement } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ApiTemplate } from '../../../shared/types/addon.types';
-import { ReturnStatus } from '../../../shared/types/addon.types';
+import { RedirectMode, RedirectType, ReturnStatus } from '../../../shared/types/addon.types';
 import { invokeAddonJson } from '../api/addon.api';
 import { useAddonFlow } from './useAddonFlow';
 
@@ -245,5 +245,90 @@ describe('useAddonFlow file list refresh', () => {
     });
 
     expect(onFileListRefresh).not.toHaveBeenCalled();
+  });
+});
+
+describe('useAddonFlow redirect', () => {
+  let container: HTMLDivElement;
+  let root: Root;
+  let hookResult: ReturnType<typeof useAddonFlow>;
+
+  const redirectTemplate: ApiTemplate = {
+    ...baseTemplate,
+    menuName: 'Redirect to Another URL',
+    apiUrl: '/api/addonCallWithRedirect',
+    returnMode: 'redirect',
+    hasFileListRefresh: false,
+    allowBlankAutoParams: true,
+    customParams: [
+      {
+        name: 'archive_name',
+        label: 'Archive Name',
+        type: 'string',
+        inputType: 'text',
+        defaultValue: 'archive.zip',
+      },
+    ],
+  };
+
+  function HookWrapper({ config }: { config: ApiTemplate[] }) {
+    hookResult = useAddonFlow({
+      config,
+      selectedLocators: [],
+      selectedItems: [],
+      currentFolderId: null,
+    });
+    return null;
+  }
+
+  beforeEach(() => {
+    container = document.createElement('div');
+    document.body.appendChild(container);
+    root = createRoot(container);
+    mockInvokeAddonJson.mockReset();
+  });
+
+  afterEach(() => {
+    act(() => {
+      root.unmount();
+    });
+    container.remove();
+    vi.restoreAllMocks();
+  });
+
+  it('opens a new tab and shows success message for redirect response', async () => {
+    const open = vi.spyOn(window, 'open').mockImplementation(() => null);
+    mockInvokeAddonJson.mockResolvedValue({
+      status: ReturnStatus.Ok,
+      redirectUrl: '/editor?locator=docs%2Fbinary_test.txt',
+      redirectType: RedirectType.SameSite,
+      redirectMode: RedirectMode.NewTab,
+      message: 'Call with Redirect Success: 0, archive.zip',
+    });
+
+    act(() => {
+      root.render(createElement(HookWrapper, { config: [redirectTemplate] }));
+    });
+
+    act(() => {
+      hookResult.openMenu();
+      hookResult.selectTemplate(redirectTemplate);
+    });
+
+    await act(async () => {
+      await hookResult.confirmParams();
+    });
+
+    expect(open).toHaveBeenCalledWith(
+      '/editor?locator=docs%2Fbinary_test.txt',
+      '_blank',
+      'noopener,noreferrer',
+    );
+    expect(hookResult.step).toBe('result');
+    expect(hookResult.resultMessage).toEqual({
+      title: 'Success',
+      description: 'Call with Redirect Success: 0, archive.zip',
+      variant: 'default',
+    });
   });
 });

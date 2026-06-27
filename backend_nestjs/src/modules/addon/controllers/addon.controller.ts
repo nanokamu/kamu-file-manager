@@ -82,7 +82,7 @@ export class AddonController {
   addonCallWithRedirect(
     @Body() dto: AddonCallWithRedirectDto,
   ): Promise<ReturnTemplateRedirect> {
-    // dto.archiveName;
+    // Keep dto but just Don't use dto parameters in return value.
     const returnDummy: ReturnTemplateRedirect = {
       status: ReturnStatus.Ok,
       redirectUrl: '/editor?locator=docs%2Fbinary_test.txt',

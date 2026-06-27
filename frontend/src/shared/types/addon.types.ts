@@ -39,7 +39,7 @@ export interface ApiTemplate {
   apiUrl: string;
   hasReturnMessage: boolean;
   hasReturnFile: boolean;
-  returnMode: 'envelope' | 'direct';
+  returnMode: 'envelope' | 'direct' | 'redirect';
   hasFileListRefresh: boolean;
   fileListRefreshDelayMs: number;
   allowBlankAutoParams: boolean; // When true, locators auto param may be []
@@ -65,9 +65,34 @@ export interface ReturnTemplateWithFile {
   message?: string;
 }
 
+export const RedirectType = {
+  SameSite: 'same-site',
+  CrossSite: 'cross-site',
+} as const;
+
+export type RedirectType = (typeof RedirectType)[keyof typeof RedirectType];
+
+export const RedirectMode = {
+  Redirect: 'redirect',
+  Replace: 'replace',
+  NewTab: 'new-tab',
+  NewWindow: 'new-window',
+} as const;
+
+export type RedirectMode = (typeof RedirectMode)[keyof typeof RedirectMode];
+
+export interface ReturnTemplateRedirect {
+  status: typeof ReturnStatus.Ok;
+  redirectUrl: string;
+  redirectType: RedirectType;
+  redirectMode: RedirectMode;
+  message?: string;
+}
+
 export type ReturnTemplateJson =
   | ReturnTemplateError
   | ReturnTemplateMessage
+  | ReturnTemplateRedirect
   | ReturnTemplateWithFile;
 
 export type AddonConfig = ApiTemplate[];
@@ -80,5 +105,20 @@ export function isReturnTemplateError(body: unknown): body is ReturnTemplateErro
     body.status === ReturnStatus.Error &&
     'message' in body &&
     typeof body.message === 'string'
+  );
+}
+
+export function isReturnTemplateRedirect(body: unknown): body is ReturnTemplateRedirect {
+  return (
+    typeof body === 'object' &&
+    body !== null &&
+    'status' in body &&
+    body.status === ReturnStatus.Ok &&
+    'redirectUrl' in body &&
+    typeof body.redirectUrl === 'string' &&
+    'redirectType' in body &&
+    typeof body.redirectType === 'string' &&
+    'redirectMode' in body &&
+    typeof body.redirectMode === 'string'
   );
 }

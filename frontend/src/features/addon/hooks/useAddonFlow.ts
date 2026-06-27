@@ -1,10 +1,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ApiTemplate } from '../../../shared/types/addon.types';
-import { isReturnTemplateError } from '../../../shared/types/addon.types';
+import {
+  isReturnTemplateError,
+  isReturnTemplateRedirect,
+  RedirectMode,
+} from '../../../shared/types/addon.types';
 import {
   parseAddonEnvelope,
   parsedEnvelopeToBlob,
 } from '../../../shared/utils/addon-envelope.util';
+import { applyAddonRedirect } from '../../../shared/utils/addon-redirect.util';
 import { ApiError } from '../../../api/client';
 import type { FileItem } from '../../file-manager/types';
 import { invokeAddonEnvelopeWithProgress, invokeAddonJson } from '../api/addon.api';
@@ -184,6 +189,46 @@ export function useAddonFlow({
         });
         scheduleFileListRefresh(selectedTemplate);
         setStep('result');
+        return;
+      }
+
+      if (selectedTemplate.returnMode === 'redirect') {
+        const response = await invokeAddonJson(selectedTemplate, body);
+
+        if (isReturnTemplateError(response)) {
+          setResultMessage({
+            title: 'Addon failed',
+            description: response.message,
+            variant: 'error',
+          });
+          setStep('result');
+          return;
+        }
+
+        if (isReturnTemplateRedirect(response)) {
+          const leavesPage =
+            response.redirectMode === RedirectMode.Redirect ||
+            response.redirectMode === RedirectMode.Replace;
+
+          if (response.message) {
+            setResultMessage({
+              title: 'Success',
+              description: response.message,
+              variant: 'default',
+            });
+          }
+
+          applyAddonRedirect(
+            response.redirectUrl,
+            response.redirectType,
+            response.redirectMode,
+          );
+          scheduleFileListRefresh(selectedTemplate);
+
+          if (!leavesPage) {
+            setStep('result');
+          }
+        }
         return;
       }
 
