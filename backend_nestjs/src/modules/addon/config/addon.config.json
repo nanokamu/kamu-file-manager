@@ -289,5 +289,37 @@
             "enabledFolder": true,
             "folderPattern": ".*"
         }
+    },
+    {
+        "menuName": "Redirect to Another URL without message",
+        "apiType": "POST",
+        "apiUrl": "/api/addonCallWithRedirect",
+        "hasReturnMessage": false,
+        "hasReturnFile": false,
+        "returnMode": "redirect",
+        "hasFileListRefresh": false,
+        "fileListRefreshDelayMs": 2000,
+        "allowBlankAutoParams": true,
+        "autoParams": [
+            {
+                "name": "locators",
+                "type": "string[]"
+            }
+        ],
+        "customParams": [
+            {
+                "name": "archive_name",
+                "label": "Archive Name",
+                "type": "string",
+                "inputType": "text",
+                "defaultValue": "archive.zip"
+            }
+        ],
+        "filterRule": {
+            "enabledFile": true,
+            "filePattern": ".*",
+            "enabledFolder": true,
+            "folderPattern": ".*"
+        }
     }
 ]

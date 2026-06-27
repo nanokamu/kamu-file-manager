@@ -182,13 +182,20 @@ export function useAddonFlow({
         const blob = parsedEnvelopeToBlob(parsed);
         triggerBrowserDownload(blob, parsed.meta.filename);
 
-        setResultMessage({
-          title: 'Download complete',
-          description: parsed.meta.message ?? `Downloaded ${parsed.meta.filename}`,
-          variant: 'default',
-        });
+        // Normally, scheduleFileListRefresh should placed after setResultMessage.
+        // But the scheduleFileListRefresh is not related to setResultMessage.
+        // So the scheduleFileListRefresh is placed here instead.
         scheduleFileListRefresh(selectedTemplate);
-        setStep('result');
+        if (selectedTemplate.hasReturnMessage) {
+          setResultMessage({
+            title: 'Download complete',
+            description: parsed.meta.message ?? `Downloaded ${parsed.meta.filename}`,
+            variant: 'default',
+          });
+          setStep('result');
+        } else {
+          closeFlow();
+        }
         return;
       }
 
@@ -210,10 +217,13 @@ export function useAddonFlow({
             response.redirectMode === RedirectMode.Redirect ||
             response.redirectMode === RedirectMode.Replace;
 
-          if (response.message) {
+          const showSuccessMessage =
+            selectedTemplate.hasReturnMessage && Boolean(response.message);
+
+          if (showSuccessMessage) {
             setResultMessage({
               title: 'Success',
-              description: response.message,
+              description: response.message!,
               variant: 'default',
             });
           }
@@ -226,7 +236,11 @@ export function useAddonFlow({
           scheduleFileListRefresh(selectedTemplate);
 
           if (!leavesPage) {
-            setStep('result');
+            if (showSuccessMessage) {
+              setStep('result');
+            } else {
+              closeFlow();
+            }
           }
         }
         return;
@@ -240,7 +254,8 @@ export function useAddonFlow({
           description: response.message,
           variant: 'error',
         });
-      } else {
+        setStep('result');
+      } else if (selectedTemplate.hasReturnMessage) {
         const description =
           'message' in response && typeof response.message === 'string'
             ? response.message
@@ -251,8 +266,11 @@ export function useAddonFlow({
           variant: 'default',
         });
         scheduleFileListRefresh(selectedTemplate);
+        setStep('result');
+      } else {
+        scheduleFileListRefresh(selectedTemplate);
+        closeFlow();
       }
-      setStep('result');
     } catch (error) {
       const description =
         error instanceof ApiError
@@ -270,7 +288,7 @@ export function useAddonFlow({
     } finally {
       setIsSubmitting(false);
     }
-  }, [selectedTemplate, selectedLocators, paramValues, scheduleFileListRefresh]);
+  }, [selectedTemplate, selectedLocators, paramValues, scheduleFileListRefresh, closeFlow]);
 
   return {
     step,

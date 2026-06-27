@@ -90,7 +90,7 @@ export function MessageBoxModal({
                     {title}
                 </h2>
                 {description && (
-                    <p className="mt-1 text-sm text-slate-500">
+                    <p className="mt-1 whitespace-pre-line text-sm text-slate-500">
                         {description}
                     </p>
                 )}

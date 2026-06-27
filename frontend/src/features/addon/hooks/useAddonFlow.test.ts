@@ -257,6 +257,7 @@ describe('useAddonFlow redirect', () => {
     ...baseTemplate,
     menuName: 'Redirect to Another URL',
     apiUrl: '/api/addonCallWithRedirect',
+    hasReturnMessage: true,
     returnMode: 'redirect',
     hasFileListRefresh: false,
     allowBlankAutoParams: true,
@@ -330,5 +331,70 @@ describe('useAddonFlow redirect', () => {
       description: 'Call with Redirect Success: 0, archive.zip',
       variant: 'default',
     });
+  });
+
+  it('opens a new tab without success message when hasReturnMessage is false', async () => {
+    const open = vi.spyOn(window, 'open').mockImplementation(() => null);
+    mockInvokeAddonJson.mockResolvedValue({
+      status: ReturnStatus.Ok,
+      redirectUrl: '/editor?locator=docs%2Fbinary_test.txt',
+      redirectType: RedirectType.SameSite,
+      redirectMode: RedirectMode.NewTab,
+      message: 'Call with Redirect Success: 0, archive.zip',
+    });
+
+    const templateWithoutMessage: ApiTemplate = {
+      ...redirectTemplate,
+      hasReturnMessage: false,
+    };
+
+    act(() => {
+      root.render(createElement(HookWrapper, { config: [templateWithoutMessage] }));
+    });
+
+    act(() => {
+      hookResult.openMenu();
+      hookResult.selectTemplate(templateWithoutMessage);
+    });
+
+    await act(async () => {
+      await hookResult.confirmParams();
+    });
+
+    expect(open).toHaveBeenCalledWith(
+      '/editor?locator=docs%2Fbinary_test.txt',
+      '_blank',
+      'noopener,noreferrer',
+    );
+    expect(hookResult.step).toBe('idle');
+    expect(hookResult.resultMessage).toBeNull();
+  });
+
+  it('closes flow without success message when hasReturnMessage is false on direct response', async () => {
+    mockInvokeAddonJson.mockResolvedValue({
+      status: ReturnStatus.Ok,
+      message: 'done',
+    });
+
+    const templateWithoutMessage: ApiTemplate = {
+      ...baseTemplate,
+      hasReturnMessage: false,
+    };
+
+    act(() => {
+      root.render(createElement(HookWrapper, { config: [templateWithoutMessage] }));
+    });
+
+    act(() => {
+      hookResult.openMenu();
+      hookResult.selectTemplate(templateWithoutMessage);
+    });
+
+    await act(async () => {
+      await hookResult.confirmParams();
+    });
+
+    expect(hookResult.step).toBe('idle');
+    expect(hookResult.resultMessage).toBeNull();
   });
 });

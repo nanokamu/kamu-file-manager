@@ -83,12 +83,19 @@ export class AddonController {
     @Body() dto: AddonCallWithRedirectDto,
   ): Promise<ReturnTemplateRedirect> {
     // Keep dto but just Don't use dto parameters in return value.
+    const msgLocatorsWithNum: string[] = [];
+    for (let i = 0; i < dto.locators.length; i++) {
+      msgLocatorsWithNum.push(`${i + 1}. ${dto.locators[i]}`);
+    }
+    const msgLocators = msgLocatorsWithNum.join('\n');
+    const msgBuilder = `Msg: ${dto.archiveName}\nmsgLocators: ${msgLocators}`;
     const returnDummy: ReturnTemplateRedirect = {
       status: ReturnStatus.Ok,
       redirectUrl: '/editor?locator=docs%2Fbinary_test.txt',
       redirectType: RedirectType.SameSite,
       redirectMode: RedirectMode.NewTab,
-      message: `Call with Redirect Success: ${dto.locators.length}, ${dto.archiveName}`,
+      // message: `Call with Redirect Success: ${dto.locators.length}, ${dto.archiveName}`,
+      message: `Call with Redirect Success:\n${msgBuilder}`,
     };
     return Promise.resolve(returnDummy);
   }
