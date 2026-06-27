@@ -3,7 +3,6 @@ import {
   IsArray,
   // IsIn,
   IsNotEmpty,
-  IsOptional,
   IsString,
 } from 'class-validator';
 
@@ -28,6 +27,5 @@ export class AddonCompressAsZipDto {
   archiveName: string;
 
   @IsString()
-  @IsOptional()
-  currentFolderLocator?: string;
+  currentFolderLocator: string;
 }

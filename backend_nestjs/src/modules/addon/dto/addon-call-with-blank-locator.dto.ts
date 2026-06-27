@@ -3,7 +3,6 @@ import {
   IsArray,
   // IsIn,
   IsNotEmpty,
-  IsOptional,
   IsString,
 } from 'class-validator';
 
@@ -19,6 +18,5 @@ export class AddonCallWithBlankLocatorDto {
   archiveName: string;
 
   @IsString()
-  @IsOptional()
-  currentFolderLocator?: string;
+  currentFolderLocator: string;
 }

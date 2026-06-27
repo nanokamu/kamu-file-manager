@@ -90,6 +90,7 @@ describe('AddonService', () => {
           locators: ['a.txt'],
           archiveName: 'bundle.tar',
           archiveType: 'tar',
+          currentFolderLocator: '',
         }),
       ).rejects.toThrow(BadRequestException);
     });
@@ -107,6 +108,7 @@ describe('AddonService', () => {
           locators: ['big.bin'],
           archiveName: 'huge.zip',
           archiveType: 'zip',
+          currentFolderLocator: '',
         }),
       ).rejects.toThrow(BadRequestException);
     });
@@ -124,6 +126,7 @@ describe('AddonService', () => {
         locators: ['nestitems'],
         archiveName: 'archive.zip',
         archiveType: 'zip',
+        currentFolderLocator: '',
       });
 
       expect(filesService.downloadZipFromLocators).toHaveBeenCalledWith(
@@ -145,6 +148,7 @@ describe('AddonService', () => {
         locators: ['a.txt', 'nestitems'],
         archiveName: 'archive.zip',
         archiveType: 'zip',
+        currentFolderLocator: '',
       });
 
       expect(filesService.downloadZipFromLocators).toHaveBeenCalledWith(
@@ -183,6 +187,7 @@ describe('AddonService', () => {
         addonService.addonCompressAsZip({
           locators: ['a.txt', 'folder/b.txt'],
           archiveName: 'compressed.zip',
+          currentFolderLocator: '',
         }),
       ).rejects.toThrow(BadRequestException);
 

@@ -3,7 +3,6 @@ import {
   IsArray,
   IsIn,
   IsNotEmpty,
-  IsOptional,
   IsString,
 } from 'class-validator';
 
@@ -32,6 +31,5 @@ export class AddonDownloadAsZipDto {
   archiveType: string;
 
   @IsString()
-  @IsOptional()
-  currentFolderLocator?: string;
+  currentFolderLocator: string;
 }
