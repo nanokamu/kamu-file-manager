@@ -22,6 +22,7 @@ interface FileTableProps {
         'aria-selected': boolean;
         'aria-label': string | undefined;
         onFocus: () => void;
+        onKeyDown: (event: React.KeyboardEvent<HTMLElement>) => void;
         ref: (node: HTMLTableRowElement | null) => void;
     };
     isDragging: boolean;

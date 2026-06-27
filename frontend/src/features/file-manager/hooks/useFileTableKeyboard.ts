@@ -3,9 +3,11 @@ import {
     useRef,
     useState,
     type KeyboardEvent,
+    type MouseEvent,
     type MutableRefObject,
 } from 'react';
 import type { FileItem } from '../types';
+import { resolveNavigationIndex } from '../utils/file-navigation.util';
 
 interface UseFileTableKeyboardOptions {
     items: FileItem[];
@@ -40,6 +42,22 @@ function isEditableTarget(target: EventTarget | null): boolean {
 
 function isModifierKey(event: KeyboardEvent): boolean {
     return event.ctrlKey || event.metaKey;
+}
+
+function shouldClaimGridFocus(target: EventTarget | null): boolean {
+    if (!(target instanceof HTMLElement)) {
+        return false;
+    }
+    if (isEditableTarget(target)) {
+        return false;
+    }
+    if (target.closest('[data-file-row-id]')) {
+        return false;
+    }
+    if (target.closest('[data-file-row-actions]')) {
+        return false;
+    }
+    return true;
 }
 
 export function useFileTableKeyboard({
@@ -83,23 +101,7 @@ export function useFileTableKeyboard({
     const displayFocusedId = isPointerSelecting ? null : activeFocusedId;
 
     const resolveCurrentIndex = useCallback((): number => {
-        if (items.length === 0) {
-            return -1;
-        }
-        if (displayFocusedId) {
-            const index = items.findIndex((item) => item.id === displayFocusedId);
-            if (index !== -1) {
-                return index;
-            }
-        }
-        if (selectedFiles.length > 0) {
-            const lastSelectedId = selectedFiles[selectedFiles.length - 1];
-            const index = items.findIndex((item) => item.id === lastSelectedId);
-            if (index !== -1) {
-                return index;
-            }
-        }
-        return 0;
+        return resolveNavigationIndex(items, displayFocusedId, selectedFiles);
     }, [displayFocusedId, items, selectedFiles]);
 
     const scrollFocusedRowIntoView = useCallback((id: string) => {
@@ -149,7 +151,7 @@ export function useFileTableKeyboard({
     }, [items, scrollFocusedRowIntoView]);
 
     const handleKeyDown = useCallback(
-        (event: KeyboardEvent<HTMLDivElement>) => {
+        (event: KeyboardEvent<HTMLElement>) => {
             if (disabled || isEditableTarget(event.target)) {
                 return;
             }
@@ -291,6 +293,11 @@ export function useFileTableKeyboard({
             role: 'grid' as const,
             'aria-multiselectable': true,
             onKeyDown: handleKeyDown,
+            onMouseDown: (event: MouseEvent) => {
+                if (shouldClaimGridFocus(event.target)) {
+                    containerRef.current?.focus();
+                }
+            },
         }),
         [handleKeyDown],
     );
@@ -304,6 +311,7 @@ export function useFileTableKeyboard({
                 'aria-selected': isSelected,
                 'aria-label': items.find((item) => item.id === id)?.name,
                 onFocus: () => setFocusedId(id),
+                onKeyDown: handleKeyDown,
                 ref: (node: HTMLTableRowElement | null) => {
                     if (node) {
                         rowRefs.current.set(id, node);
@@ -313,7 +321,7 @@ export function useFileTableKeyboard({
                 },
             };
         },
-        [displayFocusedId, items, selectedFiles],
+        [displayFocusedId, handleKeyDown, items, selectedFiles],
     );
 
     return {

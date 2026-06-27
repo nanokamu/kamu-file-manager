@@ -98,7 +98,7 @@ export default function FileManager() {
 
     useEffect(() => {
         anchorIdRef.current = null;
-    }, [filteredItems]);
+    }, [folderItems]);
 
     const clearSelection = useCallback(() => {
         anchorIdRef.current = null;

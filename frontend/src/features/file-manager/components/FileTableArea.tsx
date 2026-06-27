@@ -136,6 +136,14 @@ export function FileTableArea({
         onRowClick(item);
     };
 
+    const handleToggleSelect = useCallback(
+        (id: string, e: React.MouseEvent) => {
+            onToggleSelect(id, e);
+            focusRow(id);
+        },
+        [focusRow, onToggleSelect],
+    );
+
     return (
         <>
             <DragSelectionBox box={selectionBox} />
@@ -157,7 +165,7 @@ export function FileTableArea({
                     getKeyboardRowProps={getKeyboardRowProps}
                     isDragging={isDragging}
                     onRowClick={handleRowClick}
-                    onToggleSelect={onToggleSelect}
+                    onToggleSelect={handleToggleSelect}
                     onToggleMenu={onToggleMenu}
                     onCloseMenu={onCloseMenu}
                     onOpenInEditor={onOpenInEditor}
