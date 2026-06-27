@@ -1,4 +1,4 @@
-import { useEffect, useId } from 'react';
+import { useEffect, useId, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import type { ApiTemplate } from '../../../shared/types/addon.types';
 
@@ -30,6 +30,12 @@ export function AddonParamsModal({
   onClose,
 }: AddonParamsModalProps) {
   const titleId = useId();
+  const firstFieldRef = useRef<HTMLInputElement | HTMLSelectElement | null>(null);
+  const confirmRef = useRef<HTMLButtonElement>(null);
+
+  const setFirstFieldRef = (element: HTMLInputElement | HTMLSelectElement | null) => {
+    firstFieldRef.current = element;
+  };
 
   useEffect(() => {
     if (!isOpen || isSubmitting) {
@@ -48,6 +54,19 @@ export function AddonParamsModal({
       document.removeEventListener('keydown', handleKeyDown);
     };
   }, [isOpen, isSubmitting, onClose]);
+
+  useEffect(() => {
+    if (!isOpen || isSubmitting || !template) {
+      return;
+    }
+
+    if (template.customParams.length > 0) {
+      firstFieldRef.current?.focus();
+      return;
+    }
+
+    confirmRef.current?.focus();
+  }, [isOpen, isSubmitting, template]);
 
   if (!isOpen || !template) {
     return null;
@@ -78,7 +97,7 @@ export function AddonParamsModal({
         </p>
 
         <div className="mt-4 space-y-4">
-          {template.customParams.map((param) => (
+          {template.customParams.map((param, index) => (
             <div key={param.name}>
               <label
                 htmlFor={`addon-param-${param.name}`}
@@ -88,6 +107,7 @@ export function AddonParamsModal({
               </label>
               {param.inputType === 'dropdown' ? (
                 <select
+                  ref={index === 0 ? setFirstFieldRef : undefined}
                   id={`addon-param-${param.name}`}
                   value={values[param.name] ?? param.defaultValue}
                   onChange={(e) => onValueChange(param.name, e.target.value)}
@@ -102,6 +122,7 @@ export function AddonParamsModal({
                 </select>
               ) : (
                 <input
+                  ref={index === 0 ? setFirstFieldRef : undefined}
                   id={`addon-param-${param.name}`}
                   type="text"
                   value={values[param.name] ?? param.defaultValue}
@@ -114,33 +135,32 @@ export function AddonParamsModal({
           ))}
         </div>
 
-        <div className="mt-6 flex justify-between gap-2">
+        <div className="mt-6 grid grid-cols-[auto_1fr_auto_auto] grid-rows-1 items-center gap-2">
+          <button
+            ref={confirmRef}
+            type="button"
+            onClick={() => void onConfirm()}
+            disabled={isSubmitting}
+            className={`col-start-4 row-start-1 justify-self-end rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm shadow-blue-500/10 transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 ${focusRingClass}`}
+          >
+            {isSubmitting ? 'Running…' : 'Confirm'}
+          </button>
           <button
             type="button"
             onClick={onBack}
             disabled={isSubmitting}
-            className={`rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-60 ${focusRingClass}`}
+            className={`col-start-1 row-start-1 justify-self-start rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-60 ${focusRingClass}`}
           >
             Back
           </button>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={isSubmitting}
-              className={`rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-60 ${focusRingClass}`}
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              onClick={() => void onConfirm()}
-              disabled={isSubmitting}
-              className={`rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm shadow-blue-500/10 transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 ${focusRingClass}`}
-            >
-              {isSubmitting ? 'Running…' : 'Confirm'}
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={isSubmitting}
+            className={`col-start-3 row-start-1 justify-self-end rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-60 ${focusRingClass}`}
+          >
+            Cancel
+          </button>
         </div>
       </div>
     </div>,
