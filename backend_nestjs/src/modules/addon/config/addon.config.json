@@ -221,5 +221,36 @@
             "enabledFolder": false,
             "folderPattern": ".*"
         }
+    },
+    {
+        "menuName": "Dummy Call with Blank Locator",
+        "apiType": "POST",
+        "apiUrl": "/api/addonCallWithBlankLocator",
+        "hasReturnMessage": true,
+        "hasReturnFile": false,
+        "returnMode": "direct",
+        "hasFileListRefresh": true,
+        "fileListRefreshDelayMs": 2000,
+        "autoParams": [
+            {
+                "name": "locators",
+                "type": "string[]"
+            }
+        ],
+        "customParams": [
+            {
+                "name": "archive_name",
+                "label": "Archive Name",
+                "type": "string",
+                "inputType": "text",
+                "defaultValue": "archive.zip"
+            }
+        ],
+        "filterRule": {
+            "enabledFile": true,
+            "filePattern": ".*",
+            "enabledFolder": true,
+            "folderPattern": ".*"
+        }
     }
 ]

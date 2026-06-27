@@ -14,6 +14,8 @@ import type { AddonConfig, ReturnTemplateMessage } from '../config/addon.types';
 import { AddonCompressAsZipDto } from '../dto/addon-compress-as-zip.dto';
 import { AddonDownloadAsZipDto } from '../dto/addon-download-as-zip.dto';
 import { AddonService } from '../services/addon.service';
+import { AddonCallWithBlankLocatorDto } from '../dto/addon-call-with-blank-locator.dto';
+import { ReturnStatus } from '../config/addon.types';
 
 @Controller()
 export class AddonController {
@@ -51,5 +53,18 @@ export class AddonController {
     @Body() dto: AddonCompressAsZipDto,
   ): Promise<ReturnTemplateMessage> {
     return this.addonService.addonCompressAsZip(dto);
+  }
+
+  @Post('addonCallWithBlankLocator')
+  @HttpCode(200)
+  addonCallWithBlankLocator(
+    @Body() dto: AddonCallWithBlankLocatorDto,
+  ): Promise<ReturnTemplateMessage> {
+    // dto.archiveName;
+    const returnDummy: ReturnTemplateMessage = {
+      status: ReturnStatus.Ok,
+      message: `Call with Blank Locator Success: ${dto.locators.toString()}, ${dto.archiveName}`,
+    };
+    return Promise.resolve(returnDummy);
   }
 }
