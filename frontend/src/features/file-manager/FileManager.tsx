@@ -257,6 +257,7 @@ export default function FileManager() {
                     onDownload={downloadItem}
                     onDownloadFolderAsZip={downloadFolderAsZipItem}
                     onRename={setRenameTarget}
+                    onUploadFiles={(files) => void uploadFiles(files)}
                 />
 
             </div>

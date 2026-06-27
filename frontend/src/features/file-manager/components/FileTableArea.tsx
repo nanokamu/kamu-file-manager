@@ -25,6 +25,7 @@ interface FileTableAreaProps {
     onDownload?: (item: FileItem) => void;
     onDownloadFolderAsZip?: (item: FileItem) => void;
     onRename?: (item: FileItem) => void;
+    onUploadFiles?: (files: File[]) => void;
 }
 
 export function FileTableArea({
@@ -43,6 +44,7 @@ export function FileTableArea({
     onDownload,
     onDownloadFolderAsZip,
     onRename,
+    onUploadFiles,
 }: FileTableAreaProps) {
     const {
         getContainerProps,
@@ -80,6 +82,7 @@ export function FileTableArea({
                     onDownload={onDownload}
                     onDownloadFolderAsZip={onDownloadFolderAsZip}
                     onRename={onRename}
+                    onUploadFiles={onUploadFiles}
                 />
             </div>
         </>
