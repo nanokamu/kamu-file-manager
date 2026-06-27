@@ -590,6 +590,7 @@ export function useFileActions() {
     }, []);
 
     return {
+        currentFolderId,
         breadcrumbs,
         folderItems,
         searchItems,

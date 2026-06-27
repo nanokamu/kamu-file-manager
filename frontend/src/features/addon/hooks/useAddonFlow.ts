@@ -26,6 +26,7 @@ interface UseAddonFlowOptions {
   config: ApiTemplate[] | null;
   selectedLocators: string[];
   selectedItems: FileItem[];
+  currentFolderId: string | null;
   onFileListRefresh?: () => void;
 }
 
@@ -42,6 +43,7 @@ export function useAddonFlow({
   config,
   selectedLocators,
   selectedItems,
+  currentFolderId,
   onFileListRefresh,
 }: UseAddonFlowOptions) {
   const [step, setStep] = useState<AddonFlowStep>('idle');
@@ -51,6 +53,12 @@ export function useAddonFlow({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [resultMessage, setResultMessage] = useState<AddonResultMessage | null>(null);
   const refreshTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const currentFolderIdRef = useRef(currentFolderId);
+  const scheduledLocatorRef = useRef<string | null>(null);
+  const onFileListRefreshRef = useRef(onFileListRefresh);
+
+  currentFolderIdRef.current = currentFolderId;
+  onFileListRefreshRef.current = onFileListRefresh;
 
   const clearRefreshTimeout = useCallback(() => {
     if (refreshTimeoutRef.current !== null) {
@@ -61,18 +69,28 @@ export function useAddonFlow({
 
   const scheduleFileListRefresh = useCallback(
     (template: ApiTemplate) => {
-      if (!template.hasFileListRefresh || !onFileListRefresh) {
+      if (!template.hasFileListRefresh || !onFileListRefreshRef.current) {
         return;
       }
 
       clearRefreshTimeout();
+      const locatorAtSchedule = currentFolderIdRef.current;
+      scheduledLocatorRef.current = locatorAtSchedule;
+
       refreshTimeoutRef.current = setTimeout(() => {
         refreshTimeoutRef.current = null;
-        onFileListRefresh();
+        if (scheduledLocatorRef.current !== currentFolderIdRef.current) {
+          return;
+        }
+        onFileListRefreshRef.current?.();
       }, template.fileListRefreshDelayMs);
     },
-    [clearRefreshTimeout, onFileListRefresh],
+    [clearRefreshTimeout],
   );
+
+  useEffect(() => {
+    clearRefreshTimeout();
+  }, [currentFolderId, clearRefreshTimeout]);
 
   useEffect(() => {
     return () => {

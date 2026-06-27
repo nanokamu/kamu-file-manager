@@ -41,25 +41,47 @@ describe('useAddonFlow file list refresh', () => {
 
   function HookWrapper({
     config,
+    currentFolderId = null,
     onFileListRefresh,
   }: {
     config: ApiTemplate[];
+    currentFolderId?: string | null;
     onFileListRefresh?: () => void;
   }) {
     hookResult = useAddonFlow({
       config,
       selectedLocators: ['a.txt'],
       selectedItems: [],
+      currentFolderId,
       onFileListRefresh,
     });
     return null;
   }
 
-  function renderHook(onFileListRefresh?: () => void) {
+  function renderHook(
+    onFileListRefresh?: () => void,
+    currentFolderId: string | null = null,
+  ) {
     act(() => {
       root.render(
         createElement(HookWrapper, {
           config: [baseTemplate],
+          currentFolderId,
+          onFileListRefresh,
+        }),
+      );
+    });
+  }
+
+  function rerenderHook(
+    onFileListRefresh?: () => void,
+    currentFolderId: string | null = null,
+  ) {
+    act(() => {
+      root.render(
+        createElement(HookWrapper, {
+          config: [baseTemplate],
+          currentFolderId,
           onFileListRefresh,
         }),
       );
@@ -195,5 +217,32 @@ describe('useAddonFlow file list refresh', () => {
     });
 
     expect(onFileListRefresh).toHaveBeenCalledTimes(1);
+  });
+
+  it('cancels scheduled refresh when currentFolderId changes before delay elapses', async () => {
+    const onFileListRefresh = vi.fn();
+    mockInvokeAddonJson.mockResolvedValue({
+      status: ReturnStatus.Ok,
+      message: 'done',
+    });
+
+    renderHook(onFileListRefresh, 'folder-a');
+
+    act(() => {
+      hookResult.openMenu();
+      hookResult.selectTemplate(baseTemplate);
+    });
+
+    await act(async () => {
+      await hookResult.confirmParams();
+    });
+
+    rerenderHook(onFileListRefresh, 'folder-b');
+
+    act(() => {
+      vi.advanceTimersByTime(2000);
+    });
+
+    expect(onFileListRefresh).not.toHaveBeenCalled();
   });
 });

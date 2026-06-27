@@ -39,6 +39,7 @@ export default function FileManager() {
         downloadItem,
         downloadFolderAsZipItem,
         refreshFileList,
+        currentFolderId,
     } = useFileActions();
 
     const [searchQuery, setSearchQuery] = useState('');
@@ -95,6 +96,7 @@ export default function FileManager() {
         config: addonConfig,
         selectedLocators: selectedFileIds,
         selectedItems,
+        currentFolderId,
         onFileListRefresh: refreshFileList,
     });
 
