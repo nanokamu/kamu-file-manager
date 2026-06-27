@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ConfirmModal } from '../../shared/components/ConfirmModal';
 import { MessageBoxModal } from '../../shared/components/MessageBoxModal';
 import { OperationProgressModal } from '../../shared/components/OperationProgressModal';
 import { AddonDownloadModal } from '../addon/components/AddonDownloadModal';
@@ -12,14 +13,7 @@ import { Breadcrumbs } from './components/Breadcrumbs';
 import { TextInputDialog } from '../../shared/components/TextInputDialog';
 import { FileTableArea } from './components/FileTableArea';
 import { useFileActions } from './hooks/useFileActions';
-
-function getRangeIds(items: FileItem[], startId: string, endId: string): string[] {
-    const start = items.findIndex((i) => i.id === startId);
-    const end = items.findIndex((i) => i.id === endId);
-    if (start === -1 || end === -1) return [];
-    const [lo, hi] = [start, end].sort((a, b) => a - b);
-    return items.slice(lo, hi + 1).map((i) => i.id);
-}
+import { getRangeIds } from './utils/file-selection.util';
 
 export default function FileManager() {
     const {
@@ -55,6 +49,7 @@ export default function FileManager() {
         description: string;
     } | null>(null);
     const [renameTarget, setRenameTarget] = useState<FileItem | null>(null);
+    const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
     const anchorIdRef = useRef<string | null>(null);
 
     useEffect(() => {
@@ -177,6 +172,56 @@ export default function FileManager() {
         anchorIdRef.current = id;
     };
 
+    const handleKeyboardNavigate = useCallback(
+        (id: string, modifiers: { shiftKey: boolean }) => {
+            if (modifiers.shiftKey && anchorIdRef.current) {
+                const rangeIds = getRangeIds(filteredItems, anchorIdRef.current, id);
+                if (rangeIds.length > 0) {
+                    setSelectedFiles(rangeIds);
+                    return;
+                }
+            }
+
+            setSelectedFiles([id]);
+            anchorIdRef.current = id;
+        },
+        [filteredItems],
+    );
+
+    const handleKeyboardToggleSelect = useCallback((id: string) => {
+        setSelectedFiles((prev) =>
+            prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
+        );
+        anchorIdRef.current = id;
+    }, []);
+
+    const handleSelectAll = useCallback(() => {
+        if (filteredItems.length === 0) {
+            return;
+        }
+        setSelectedFiles(filteredItems.map((item) => item.id));
+        anchorIdRef.current = filteredItems[filteredItems.length - 1].id;
+    }, [filteredItems]);
+
+    const handleRequestDelete = useCallback(() => {
+        if (selectedFileIds.length > 0) {
+            setIsDeleteConfirmOpen(true);
+        }
+    }, [selectedFileIds.length]);
+
+    const isKeyboardDisabled =
+        isCreateFolderOpen ||
+        renameTarget !== null ||
+        messageBox !== null ||
+        addonStep !== 'idle' ||
+        addonResultMessage !== null ||
+        isOperationModalOpen ||
+        openMenuId !== null ||
+        isDeleteConfirmOpen;
+
+    const deleteTitle = `Delete ${selectedFileIds.length} item${selectedFileIds.length === 1 ? '' : 's'}?`;
+    const deleteDescription = `This action cannot be undone. The selected item${selectedFileIds.length === 1 ? '' : 's'} will be permanently deleted.`;
+
     const handleBreadcrumbClick = (id: string | null) => {
         navigateToFolder(id);
         setSelectedFiles([]);
@@ -196,6 +241,11 @@ export default function FileManager() {
         const ids = [...selectedFileIds];
         setSelectedFiles([]);
         await deleteItems(ids);
+    };
+
+    const handleDeleteConfirm = () => {
+        setIsDeleteConfirmOpen(false);
+        void handleDelete();
     };
 
     const handleCreateFolderSubmit = async (folderName: string): Promise<boolean> => {
@@ -223,7 +273,7 @@ export default function FileManager() {
                     onCopy={handleCopy}
                     onMove={handleMove}
                     onPaste={() => void pasteItems()}
-                    onDelete={() => void handleDelete()}
+                    onRequestDelete={handleRequestDelete}
                     onNewFolder={() => setIsCreateFolderOpen(true)}
                     onUpload={uploadFiles}
                     showAddon={selectedFileIds.length > 0 && applicableTemplates.length > 0}
@@ -239,6 +289,8 @@ export default function FileManager() {
                     items={filteredItems}
                     selectedFiles={selectedFileIds}
                     openMenuId={openMenuId}
+                    anchorIdRef={anchorIdRef}
+                    keyboardDisabled={isKeyboardDisabled}
                     onRowClick={handleRowClick}
                     onToggleSelect={handleSelectFile}
                     onRangeSelect={applyRangeSelection}
@@ -251,6 +303,15 @@ export default function FileManager() {
                             clearSelection();
                         }
                     }}
+                    onKeyboardNavigate={handleKeyboardNavigate}
+                    onKeyboardToggleSelect={handleKeyboardToggleSelect}
+                    onKeyboardSelectAll={handleSelectAll}
+                    onKeyboardClearSelection={clearSelection}
+                    onKeyboardCopy={handleCopy}
+                    onKeyboardMove={handleMove}
+                    onKeyboardPaste={() => void pasteItems()}
+                    onKeyboardRequestDelete={handleRequestDelete}
+                    onKeyboardRename={setRenameTarget}
                     onToggleMenu={(id) => setOpenMenuId((prev) => (prev === id ? null : id))}
                     onCloseMenu={() => setOpenMenuId(null)}
                     onOpenInEditor={openInEditor}
@@ -357,6 +418,17 @@ export default function FileManager() {
                     autoCloseOnComplete={operation === 'rename'}
                 />
             )}
+
+            <ConfirmModal
+                isOpen={isDeleteConfirmOpen}
+                onClose={() => setIsDeleteConfirmOpen(false)}
+                onConfirm={handleDeleteConfirm}
+                title={deleteTitle}
+                description={deleteDescription}
+                confirmLabel="Delete"
+                variant="danger"
+                initialFocus="cancel"
+            />
         </div>
     );
 }

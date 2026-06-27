@@ -1,5 +1,4 @@
-import React, { useRef, useState } from 'react';
-import { ConfirmModal } from '../../../shared/components/ConfirmModal';
+import React, { useRef } from 'react';
 import { Tooltip } from '../../../shared/components/Tooltip';
 
 interface ActionBarProps {
@@ -12,7 +11,7 @@ interface ActionBarProps {
     onCopy?: () => void;
     onMove?: () => void;
     onPaste?: () => void;
-    onDelete?: () => void;
+    onRequestDelete?: () => void;
     onNewFolder?: () => void;
     onUpload?: (files: File[]) => void;
     showAddon?: boolean;
@@ -62,14 +61,13 @@ export function ActionBar({
     onCopy,
     onMove,
     onPaste,
-    onDelete,
+    onRequestDelete,
     onNewFolder,
     onUpload,
     showAddon = false,
     onAddon,
 }: ActionBarProps) {
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
 
     const handleUploadClick = () => {
         fileInputRef.current?.click();
@@ -83,13 +81,6 @@ export function ActionBar({
         event.target.value = '';
     };
 
-    const handleDeleteConfirm = () => {
-        onDelete?.();
-        setIsDeleteConfirmOpen(false);
-    };
-
-    const deleteTitle = `Delete ${selectedCount} item${selectedCount === 1 ? '' : 's'}?`;
-    const deleteDescription = `This action cannot be undone. The selected item${selectedCount === 1 ? '' : 's'} will be permanently deleted.`;
     const deleteLabel = `Delete (${selectedCount})`;
     const pasteLabel = clipboardCount > 0 ? `Paste (${clipboardCount})` : 'Paste';
 
@@ -157,7 +148,7 @@ export function ActionBar({
                     {selectedCount > 0 && (
                         <IconActionButton
                             label={deleteLabel}
-                            onClick={() => setIsDeleteConfirmOpen(true)}
+                            onClick={onRequestDelete}
                             className={deleteButtonClass}
                         >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -184,17 +175,6 @@ export function ActionBar({
                     </IconActionButton>
                 </div>
             </div>
-
-            <ConfirmModal
-                isOpen={isDeleteConfirmOpen}
-                onClose={() => setIsDeleteConfirmOpen(false)}
-                onConfirm={handleDeleteConfirm}
-                title={deleteTitle}
-                description={deleteDescription}
-                confirmLabel="Delete"
-                variant="danger"
-                initialFocus="cancel"
-            />
         </div>
     );
 }

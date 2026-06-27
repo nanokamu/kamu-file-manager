@@ -190,6 +190,13 @@ export function useDragRowSelection({
             suppressDragEndClick(suppressClickCleanupRef);
         } else if (!didDrag && pending?.startedOnEmpty) {
             onEmptyAreaClickRef.current();
+        } else if (
+            didDrag &&
+            pending?.mode === 'marquee' &&
+            pending.startedOnEmpty &&
+            marqueeIntersectedRef.current.length === 0
+        ) {
+            onEmptyAreaClickRef.current();
         }
 
         pendingRef.current = null;

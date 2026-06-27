@@ -10,10 +10,19 @@ import { FileRowMenu } from './FileRowMenu';
 interface FileTableProps {
     items: FileItem[];
     selectedFiles: string[];
+    focusedId: string | null;
     openMenuId: string | null;
     getRowProps: (id: string) => {
         'data-file-row-id': string;
         onMouseDown: (e: React.MouseEvent) => void;
+    };
+    getKeyboardRowProps: (id: string) => {
+        role: 'row';
+        tabIndex: number;
+        'aria-selected': boolean;
+        'aria-label': string | undefined;
+        onFocus: () => void;
+        ref: (node: HTMLTableRowElement | null) => void;
     };
     isDragging: boolean;
     onRowClick: (item: FileItem) => void;
@@ -30,8 +39,10 @@ interface FileTableProps {
 export function FileTable({
     items,
     selectedFiles,
+    focusedId,
     openMenuId,
     getRowProps,
+    getKeyboardRowProps,
     isDragging,
     onRowClick,
     onToggleSelect,
@@ -80,14 +91,18 @@ export function FileTable({
                     ) : (
                         items.map((item) => {
                             const isSelected = selectedFiles.includes(item.id);
+                            const isFocused = focusedId === item.id;
                             const rowProps = getRowProps(item.id);
+                            const keyboardRowProps = getKeyboardRowProps(item.id);
                             return (
                                 <tr
                                     key={item.id}
                                     {...rowProps}
+                                    {...keyboardRowProps}
                                     onClick={() => onRowClick(item)}
-                                    className={`hover:bg-slate-50/80 transition-colors cursor-pointer group ${isSelected ? 'bg-blue-50/40 hover:bg-blue-50/60' : ''
-                                        }`}
+                                    className={`hover:bg-slate-50/80 transition-colors cursor-pointer group outline-none ${
+                                        isSelected ? 'bg-blue-50/40 hover:bg-blue-50/60' : ''
+                                    } ${isFocused ? 'ring-2 ring-inset ring-blue-500/50' : ''}`}
                                 >
                                     {/* Checkbox column */}
                                     <td
