@@ -140,6 +140,7 @@ export function useFileActions() {
     const [files, setFiles] = useState<FileItem[]>([]);
     const [clipboard, setClipboard] = useState<ClipboardState | null>(null);
     const loadRequestIdRef = useRef(0);
+    const pasteInProgressRef = useRef(false);
     const lastResourcesRef = useRef<UnifiedResource[]>([]);
 
     const {
@@ -374,107 +375,112 @@ export function useFileActions() {
     }, []);
 
     const pasteItems = useCallback(async () => {
-        if (!clipboard || clipboard.sources.length === 0) {
+        if (pasteInProgressRef.current || !clipboard || clipboard.sources.length === 0) {
             return;
         }
 
-        const targetFolder = currentFolderPath(currentFolderId);
-        const targetFolderNormalized = normalizeLocator(targetFolder === '/' ? '' : targetFolder);
-        const existingNames = folderItems.map((item) => item.name);
-        const usedNames = [...existingNames];
+        pasteInProgressRef.current = true;
+        try {
+            const targetFolder = currentFolderPath(currentFolderId);
+            const targetFolderNormalized = normalizeLocator(targetFolder === '/' ? '' : targetFolder);
+            const existingNames = folderItems.map((item) => item.name);
+            const usedNames = [...existingNames];
 
-        const operations: { id: string; label: string; source: string; destination: string; recursive: boolean }[] = [];
+            const operations: { id: string; label: string; source: string; destination: string; recursive: boolean }[] = [];
 
-        for (const sourceItem of clipboard.sources) {
-            const sourceLocator = sourceItem.id;
-            const sourceNormalized = normalizeLocator(sourceLocator);
-            const sourceParent = parentLocator(sourceLocator);
-            const isFolder = sourceItem.type === 'folder';
-            const baseName = sourceItem.name;
+            for (const sourceItem of clipboard.sources) {
+                const sourceLocator = sourceItem.id;
+                const sourceNormalized = normalizeLocator(sourceLocator);
+                const sourceParent = parentLocator(sourceLocator);
+                const isFolder = sourceItem.type === 'folder';
+                const baseName = sourceItem.name;
 
-            if (clipboard.mode === 'move') {
-                if (sourceParent === targetFolder) {
+                if (clipboard.mode === 'move') {
+                    if (sourceParent === targetFolder) {
+                        continue;
+                    }
+
+                    const destination = joinLocator(
+                        targetFolderNormalized || null,
+                        baseName,
+                    );
+
+                    operations.push({
+                        id: sourceLocator,
+                        label: baseName,
+                        source: sourceNormalized,
+                        destination,
+                        recursive: isFolder,
+                    });
                     continue;
                 }
 
-                const destination = joinLocator(
-                    targetFolderNormalized || null,
-                    baseName,
+                const sameParent = sourceParent === targetFolder;
+                const nameCollision = usedNames.some(
+                    (name) => name.toLowerCase() === baseName.toLowerCase(),
                 );
+
+                const destinationName = sameParent || nameCollision
+                    ? resolveUniqueCopyName(baseName, usedNames, isFolder)
+                    : baseName;
+
+                usedNames.push(destinationName);
 
                 operations.push({
                     id: sourceLocator,
-                    label: baseName,
+                    label: destinationName,
                     source: sourceNormalized,
-                    destination,
+                    destination: joinLocator(targetFolderNormalized || null, destinationName),
                     recursive: isFolder,
                 });
-                continue;
             }
 
-            const sameParent = sourceParent === targetFolder;
-            const nameCollision = usedNames.some(
-                (name) => name.toLowerCase() === baseName.toLowerCase(),
+            if (operations.length === 0) {
+                setClipboard(null);
+                return;
+            }
+
+            const operationKind = clipboard.mode;
+            let hadFailure = false;
+
+            await runBatch(
+                operationKind,
+                operations.map((op) => ({ id: op.id, label: op.label })),
+                async (index, update) => {
+                    const op = operations[index];
+
+                    update({ status: 'in_progress', progress: 0 });
+
+                    try {
+                        if (operationKind === 'copy') {
+                            await copyFile({
+                                sourceLocator: op.source,
+                                destinationLocator: op.destination,
+                                recursive: op.recursive,
+                            });
+                        } else {
+                            await moveFile({
+                                sourceLocator: op.source,
+                                destinationLocator: op.destination,
+                                recursive: op.recursive,
+                            });
+                        }
+
+                        update({ status: 'completed', progress: 100 });
+                    } catch (error) {
+                        hadFailure = true;
+                        const message = error instanceof Error ? error.message : `${operationKind} failed`;
+                        update({ status: 'failed', progress: 0, error: message });
+                    }
+                },
             );
 
-            const destinationName = sameParent || nameCollision
-                ? resolveUniqueCopyName(baseName, usedNames, isFolder)
-                : baseName;
-
-            usedNames.push(destinationName);
-
-            operations.push({
-                id: sourceLocator,
-                label: destinationName,
-                source: sourceNormalized,
-                destination: joinLocator(targetFolderNormalized || null, destinationName),
-                recursive: isFolder,
-            });
-        }
-
-        if (operations.length === 0) {
             setClipboard(null);
-            return;
-        }
-
-        const operationKind = clipboard.mode;
-        let hadFailure = false;
-
-        await runBatch(
-            operationKind,
-            operations.map((op) => ({ id: op.id, label: op.label })),
-            async (index, update) => {
-                const op = operations[index];
-
-                update({ status: 'in_progress', progress: 0 });
-
-                try {
-                    if (operationKind === 'copy') {
-                        await copyFile({
-                            sourceLocator: op.source,
-                            destinationLocator: op.destination,
-                            recursive: op.recursive,
-                        });
-                    } else {
-                        await moveFile({
-                            sourceLocator: op.source,
-                            destinationLocator: op.destination,
-                            recursive: op.recursive,
-                        });
-                    }
-
-                    update({ status: 'completed', progress: 100 });
-                } catch (error) {
-                    hadFailure = true;
-                    const message = error instanceof Error ? error.message : `${operationKind} failed`;
-                    update({ status: 'failed', progress: 0, error: message });
-                }
-            },
-        );
-
-        setClipboard(null);
-        if (!hadFailure) {
-            loadFiles();
+            if (!hadFailure) {
+                loadFiles();
+            }
+        } finally {
+            pasteInProgressRef.current = false;
         }
     }, [clipboard, currentFolderId, folderItems, runBatch, loadFiles]);
 

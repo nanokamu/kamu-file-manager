@@ -368,7 +368,6 @@ export function useFileTableKeyboard({
                 'aria-selected': isSelected,
                 'aria-label': items.find((item) => item.id === id)?.name,
                 onFocus: () => setFocusedId(id),
-                onKeyDown: handleKeyDown,
                 ref: (node: HTMLTableRowElement | null) => {
                     if (node) {
                         rowRefs.current.set(id, node);
@@ -378,7 +377,7 @@ export function useFileTableKeyboard({
                 },
             };
         },
-        [displayFocusedId, handleKeyDown, items, selectedFiles],
+        [displayFocusedId, items, selectedFiles],
     );
 
     return {
