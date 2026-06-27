@@ -98,6 +98,7 @@ describe('AddonController', () => {
         locators: ['a.txt'],
         archiveName: 'archive.zip',
         archiveType: 'zip',
+        currentFolderLocator: 'projects',
       };
 
       const file = await addonController.addonDownloadAsZip(dto, res);
@@ -120,6 +121,7 @@ describe('AddonController', () => {
       const dto = {
         locators: ['a.txt'],
         archiveName: 'archive.zip',
+        currentFolderLocator: '',
       };
 
       const result = await addonController.addonCompressAsZip(dto);

@@ -13,6 +13,10 @@
             {
                 "name": "locators",
                 "type": "string[]"
+            },
+            {
+                "name": "currentFolderLocator",
+                "type": "string"
             }
         ],
         "customParams": [
@@ -45,6 +49,10 @@
             {
                 "name": "locators",
                 "type": "string[]"
+            },
+            {
+                "name": "currentFolderLocator",
+                "type": "string"
             }
         ],
         "customParams": [
@@ -110,6 +118,10 @@
             {
                 "name": "locators",
                 "type": "string[]"
+            },
+            {
+                "name": "currentFolderLocator",
+                "type": "string"
             }
         ],
         "customParams": [
@@ -175,6 +187,10 @@
             {
                 "name": "locators",
                 "type": "string[]"
+            },
+            {
+                "name": "currentFolderLocator",
+                "type": "string"
             }
         ],
         "customParams": [
@@ -240,6 +256,10 @@
             {
                 "name": "locators",
                 "type": "string[]"
+            },
+            {
+                "name": "currentFolderLocator",
+                "type": "string"
             }
         ],
         "customParams": [
@@ -272,6 +292,10 @@
             {
                 "name": "locators",
                 "type": "string[]"
+            },
+            {
+                "name": "currentFolderLocator",
+                "type": "string"
             }
         ],
         "customParams": [
@@ -304,6 +328,10 @@
             {
                 "name": "locators",
                 "type": "string[]"
+            },
+            {
+                "name": "currentFolderLocator",
+                "type": "string"
             }
         ],
         "customParams": [

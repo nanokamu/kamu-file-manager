@@ -3,6 +3,7 @@ import {
   IsArray,
   // IsIn,
   IsNotEmpty,
+  IsOptional,
   IsString,
 } from 'class-validator';
 
@@ -16,4 +17,8 @@ export class AddonCallWithRedirectDto {
   @IsString()
   @IsNotEmpty()
   archiveName: string;
+
+  @IsString()
+  @IsOptional()
+  currentFolderLocator?: string;
 }

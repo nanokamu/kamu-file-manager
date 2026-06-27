@@ -17,6 +17,7 @@ import {
   buildAddonRequestBody,
   filterApplicableTemplates,
   getDefaultParamValues,
+  toCurrentFolderLocator,
 } from '../utils/addon-params.util';
 
 export type AddonFlowStep = 'idle' | 'menu' | 'params' | 'downloading' | 'result';
@@ -162,6 +163,7 @@ export function useAddonFlow({
       selectedTemplate,
       selectedLocators,
       paramValues,
+      toCurrentFolderLocator(currentFolderId),
     );
 
     const isEnvelope =
@@ -295,7 +297,7 @@ export function useAddonFlow({
     } finally {
       setIsSubmitting(false);
     }
-  }, [selectedTemplate, selectedLocators, paramValues, scheduleFileListRefresh, closeFlow]);
+  }, [selectedTemplate, selectedLocators, paramValues, currentFolderId, scheduleFileListRefresh, closeFlow]);
 
   return {
     step,

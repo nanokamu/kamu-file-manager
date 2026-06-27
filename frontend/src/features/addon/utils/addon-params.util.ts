@@ -48,18 +48,23 @@ export function filterApplicableTemplates(
   });
 }
 
+export function toCurrentFolderLocator(currentFolderId: string | null): string {
+  return currentFolderId ?? '';
+}
+
 export function buildAddonRequestBody(
   template: ApiTemplate,
   locators: string[],
   customValues: Record<string, string>,
+  currentFolderLocator: string,
 ): Record<string, unknown> {
   const body: Record<string, unknown> = {};
 
   for (const autoParam of template.autoParams) {
     if (autoParam.type === 'string[]' && autoParam.name === 'locators') {
       body.locators = locators;
-    } else {
-      body[autoParam.name] = locators;
+    } else if (autoParam.type === 'string' && autoParam.name === 'currentFolderLocator') {
+      body.currentFolderLocator = currentFolderLocator;
     }
   }
 

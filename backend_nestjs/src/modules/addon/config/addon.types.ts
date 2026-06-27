@@ -1,3 +1,4 @@
+/** Supported auto param names: locators (string[]), currentFolderLocator (string). */
 export interface AutoParam {
   name: string;
   type: string;

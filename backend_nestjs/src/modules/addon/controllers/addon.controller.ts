@@ -88,7 +88,7 @@ export class AddonController {
       msgLocatorsWithNum.push(`${i + 1}. ${dto.locators[i]}`);
     }
     const msgLocators = msgLocatorsWithNum.join('\n');
-    const msgBuilder = `Msg: ${dto.archiveName}\nmsgLocators: ${msgLocators}`;
+    const msgBuilder = `Msg: ${dto.archiveName}\nLoc: ${dto.currentFolderLocator}\nmsgLocators: ${msgLocators}`;
     const returnDummy: ReturnTemplateRedirect = {
       status: ReturnStatus.Ok,
       redirectUrl: '/editor?locator=docs%2Fbinary_test.txt',

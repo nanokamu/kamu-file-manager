@@ -6,6 +6,7 @@ import {
   filterApplicableTemplates,
   getDefaultParamValues,
   snakeToCamel,
+  toCurrentFolderLocator,
 } from './addon-params.util';
 
 const baseTemplate: ApiTemplate = {
@@ -189,12 +190,23 @@ describe('addon-params.util', () => {
     });
   });
 
+  describe('toCurrentFolderLocator', () => {
+    it('returns empty string for null', () => {
+      expect(toCurrentFolderLocator(null)).toBe('');
+    });
+
+    it('returns the folder id unchanged', () => {
+      expect(toCurrentFolderLocator('projects/design')).toBe('projects/design');
+    });
+  });
+
   describe('buildAddonRequestBody', () => {
     it('merges locators and camelCased custom params', () => {
       const body = buildAddonRequestBody(
         baseTemplate,
         ['/a.txt', '/b.txt'],
         { archive_name: 'out.zip', archive_type: 'tar.gz' },
+        '',
       );
 
       expect(body).toEqual({
@@ -202,6 +214,41 @@ describe('addon-params.util', () => {
         archiveName: 'out.zip',
         archiveType: 'tar.gz',
       });
+    });
+
+    it('includes currentFolderLocator when declared in autoParams', () => {
+      const template: ApiTemplate = {
+        ...baseTemplate,
+        autoParams: [
+          { name: 'locators', type: 'string[]' },
+          { name: 'currentFolderLocator', type: 'string' },
+        ],
+      };
+
+      const body = buildAddonRequestBody(
+        template,
+        ['/a.txt'],
+        { archive_name: 'out.zip', archive_type: 'zip' },
+        'projects/design',
+      );
+
+      expect(body).toEqual({
+        locators: ['/a.txt'],
+        currentFolderLocator: 'projects/design',
+        archiveName: 'out.zip',
+        archiveType: 'zip',
+      });
+    });
+
+    it('omits currentFolderLocator when not declared in autoParams', () => {
+      const body = buildAddonRequestBody(
+        baseTemplate,
+        ['/a.txt'],
+        {},
+        'projects/design',
+      );
+
+      expect(body).toEqual({ locators: ['/a.txt'] });
     });
   });
 });

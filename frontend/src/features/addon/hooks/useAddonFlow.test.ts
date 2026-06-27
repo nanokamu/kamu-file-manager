@@ -248,6 +248,69 @@ describe('useAddonFlow file list refresh', () => {
   });
 });
 
+describe('useAddonFlow currentFolderLocator', () => {
+  let container: HTMLDivElement;
+  let root: Root;
+  let hookResult: ReturnType<typeof useAddonFlow>;
+
+  const templateWithFolderLocator: ApiTemplate = {
+    ...baseTemplate,
+    autoParams: [
+      { name: 'locators', type: 'string[]' },
+      { name: 'currentFolderLocator', type: 'string' },
+    ],
+  };
+
+  function HookWrapper({ currentFolderId }: { currentFolderId: string | null }) {
+    hookResult = useAddonFlow({
+      config: [templateWithFolderLocator],
+      selectedLocators: ['a.txt'],
+      selectedItems: [],
+      currentFolderId,
+    });
+    return null;
+  }
+
+  beforeEach(() => {
+    container = document.createElement('div');
+    document.body.appendChild(container);
+    root = createRoot(container);
+    mockInvokeAddonJson.mockReset();
+  });
+
+  afterEach(() => {
+    act(() => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
+  it('sends currentFolderLocator in request body when template declares it', async () => {
+    mockInvokeAddonJson.mockResolvedValue({
+      status: ReturnStatus.Ok,
+      message: 'done',
+    });
+
+    act(() => {
+      root.render(createElement(HookWrapper, { currentFolderId: 'projects/design' }));
+    });
+
+    act(() => {
+      hookResult.openMenu();
+      hookResult.selectTemplate(templateWithFolderLocator);
+    });
+
+    await act(async () => {
+      await hookResult.confirmParams();
+    });
+
+    expect(mockInvokeAddonJson).toHaveBeenCalledWith(templateWithFolderLocator, {
+      locators: ['a.txt'],
+      currentFolderLocator: 'projects/design',
+    });
+  });
+});
+
 describe('useAddonFlow redirect', () => {
   let container: HTMLDivElement;
   let root: Root;

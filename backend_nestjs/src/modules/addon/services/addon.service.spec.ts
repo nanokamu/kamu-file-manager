@@ -61,6 +61,7 @@ describe('AddonService', () => {
         locators: ['a.txt'],
         archiveName: 'archive.zip',
         archiveType: 'zip',
+        currentFolderLocator: 'projects',
       });
 
       const envelope = await readStream(stream);
@@ -163,6 +164,7 @@ describe('AddonService', () => {
       const result = await addonService.addonCompressAsZip({
         locators: ['a.txt'],
         archiveName: 'compressed.zip',
+        currentFolderLocator: '',
       });
 
       expect(filesService.compressLocatorsToZipFile).toHaveBeenCalledWith(
