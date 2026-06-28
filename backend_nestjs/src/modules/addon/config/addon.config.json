@@ -21,7 +21,7 @@
         ],
         "customParams": [
             {
-                "name": "archive_name",
+                "name": "archiveName",
                 "label": "Archive Name",
                 "type": "string",
                 "inputType": "text",
@@ -57,14 +57,14 @@
         ],
         "customParams": [
             {
-                "name": "archive_name",
+                "name": "archiveName",
                 "label": "Archive Name",
                 "type": "string",
                 "inputType": "text",
                 "defaultValue": "archive.zip"
             },
             {
-                "name": "archive_type",
+                "name": "archiveType",
                 "label": "Archive Type",
                 "type": "string",
                 "inputType": "dropdown",
@@ -126,14 +126,14 @@
         ],
         "customParams": [
             {
-                "name": "archive_name",
+                "name": "archiveName",
                 "label": "Archive Name",
                 "type": "string",
                 "inputType": "text",
                 "defaultValue": "archive.zip"
             },
             {
-                "name": "archive_type",
+                "name": "archiveType",
                 "label": "Archive Type",
                 "type": "string",
                 "inputType": "dropdown",
@@ -195,14 +195,14 @@
         ],
         "customParams": [
             {
-                "name": "archive_name",
+                "name": "archiveName",
                 "label": "Archive Name",
                 "type": "string",
                 "inputType": "text",
                 "defaultValue": "archive.zip"
             },
             {
-                "name": "archive_type",
+                "name": "archiveType",
                 "label": "Archive Type",
                 "type": "string",
                 "inputType": "dropdown",
@@ -264,11 +264,11 @@
         ],
         "customParams": [
             {
-                "name": "archive_name",
-                "label": "Archive Name",
+                "name": "noteMessage",
+                "label": "Note Message",
                 "type": "string",
                 "inputType": "text",
-                "defaultValue": "archive.zip"
+                "defaultValue": ""
             }
         ],
         "filterRule": {
@@ -300,7 +300,7 @@
         ],
         "customParams": [
             {
-                "name": "archive_name",
+                "name": "archiveName",
                 "label": "Archive Name",
                 "type": "string",
                 "inputType": "text",
@@ -315,7 +315,7 @@
         }
     },
     {
-        "menuName": "Redirect to Another URL without message",
+        "menuName": "Redirect to Another URL without Message",
         "apiType": "POST",
         "apiUrl": "/api/addonCallWithRedirect",
         "hasReturnMessage": false,
@@ -336,7 +336,7 @@
         ],
         "customParams": [
             {
-                "name": "archive_name",
+                "name": "archiveName",
                 "label": "Archive Name",
                 "type": "string",
                 "inputType": "text",

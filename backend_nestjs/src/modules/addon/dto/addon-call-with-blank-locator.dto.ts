@@ -15,7 +15,7 @@ export class AddonCallWithBlankLocatorDto {
 
   @IsString()
   @IsNotEmpty()
-  archiveName: string;
+  noteMessage: string;
 
   @IsString()
   currentFolderLocator: string;

@@ -5,7 +5,6 @@ import {
   buildAddonRequestBody,
   filterApplicableTemplates,
   getDefaultParamValues,
-  snakeToCamel,
   toCurrentFolderLocator,
 } from './addon-params.util';
 
@@ -22,14 +21,14 @@ const baseTemplate: ApiTemplate = {
   autoParams: [{ name: 'locators', type: 'string[]' }],
   customParams: [
     {
-      name: 'archive_name',
+      name: 'archiveName',
       label: 'Archive Name',
       type: 'string',
       inputType: 'text',
       defaultValue: 'archive.zip',
     },
     {
-      name: 'archive_type',
+      name: 'archiveType',
       label: 'Archive Type',
       type: 'string',
       inputType: 'dropdown',
@@ -56,22 +55,11 @@ function makeItem(id: string, type: FileItem['type']): FileItem {
 }
 
 describe('addon-params.util', () => {
-  describe('snakeToCamel', () => {
-    it('converts snake_case to camelCase', () => {
-      expect(snakeToCamel('archive_name')).toBe('archiveName');
-      expect(snakeToCamel('archive_type')).toBe('archiveType');
-    });
-
-    it('leaves names without underscores unchanged', () => {
-      expect(snakeToCamel('locators')).toBe('locators');
-    });
-  });
-
   describe('getDefaultParamValues', () => {
     it('maps param names to default values', () => {
       expect(getDefaultParamValues(baseTemplate.customParams)).toEqual({
-        archive_name: 'archive.zip',
-        archive_type: 'zip',
+        archiveName: 'archive.zip',
+        archiveType: 'zip',
       });
     });
   });
@@ -201,11 +189,11 @@ describe('addon-params.util', () => {
   });
 
   describe('buildAddonRequestBody', () => {
-    it('merges locators and camelCased custom params', () => {
+    it('merges locators and custom params', () => {
       const body = buildAddonRequestBody(
         baseTemplate,
         ['/a.txt', '/b.txt'],
-        { archive_name: 'out.zip', archive_type: 'tar.gz' },
+        { archiveName: 'out.zip', archiveType: 'tar.gz' },
         '',
       );
 
@@ -228,7 +216,7 @@ describe('addon-params.util', () => {
       const body = buildAddonRequestBody(
         template,
         ['/a.txt'],
-        { archive_name: 'out.zip', archive_type: 'zip' },
+        { archiveName: 'out.zip', archiveType: 'zip' },
         'projects/design',
       );
 

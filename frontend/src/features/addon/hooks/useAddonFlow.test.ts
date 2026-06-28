@@ -326,7 +326,7 @@ describe('useAddonFlow redirect', () => {
     allowBlankAutoParams: true,
     customParams: [
       {
-        name: 'archive_name',
+        name: 'archiveName',
         label: 'Archive Name',
         type: 'string',
         inputType: 'text',

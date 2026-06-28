@@ -69,10 +69,10 @@ export class AddonController {
   addonCallWithBlankLocator(
     @Body() dto: AddonCallWithBlankLocatorDto,
   ): Promise<ReturnTemplateMessage> {
-    // dto.archiveName;
+    // dto.noteMessage;
     const returnDummy: ReturnTemplateMessage = {
       status: ReturnStatus.Ok,
-      message: `Call with Blank Locator Success: ${dto.locators.length}, ${dto.archiveName}`,
+      message: `Call with Blank Locator Success: ${dto.locators.length}, ${dto.noteMessage}`,
     };
     return Promise.resolve(returnDummy);
   }

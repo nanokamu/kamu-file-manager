@@ -1,10 +1,6 @@
 import type { AddonConfig, ApiTemplate, CustomParam } from '../../../shared/types/addon.types';
 import type { FileItem } from '../../file-manager/types';
 
-export function snakeToCamel(name: string): string {
-  return name.replace(/_([a-z])/g, (_, letter: string) => letter.toUpperCase());
-}
-
 export function getDefaultParamValues(
   customParams: CustomParam[],
 ): Record<string, string> {
@@ -69,7 +65,7 @@ export function buildAddonRequestBody(
   }
 
   for (const [name, value] of Object.entries(customValues)) {
-    body[snakeToCamel(name)] = value;
+    body[name] = value;
   }
 
   return body;

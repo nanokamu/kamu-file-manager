@@ -21,7 +21,7 @@
         ],
         "customParams": [
             {
-                "name": "archive_name",
+                "name": "archiveName",
                 "label": "Archive Name",
                 "type": "string",
                 "inputType": "text",
@@ -57,14 +57,14 @@
         ],
         "customParams": [
             {
-                "name": "archive_name",
+                "name": "archiveName",
                 "label": "Archive Name",
                 "type": "string",
                 "inputType": "text",
                 "defaultValue": "archive.zip"
             },
             {
-                "name": "archive_type",
+                "name": "archiveType",
                 "label": "Archive Type",
                 "type": "string",
                 "inputType": "dropdown",
@@ -126,14 +126,14 @@
         ],
         "customParams": [
             {
-                "name": "archive_name",
+                "name": "archiveName",
                 "label": "Archive Name",
                 "type": "string",
                 "inputType": "text",
                 "defaultValue": "archive.zip"
             },
             {
-                "name": "archive_type",
+                "name": "archiveType",
                 "label": "Archive Type",
                 "type": "string",
                 "inputType": "dropdown",
@@ -195,14 +195,14 @@
         ],
         "customParams": [
             {
-                "name": "archive_name",
+                "name": "archiveName",
                 "label": "Archive Name",
                 "type": "string",
                 "inputType": "text",
                 "defaultValue": "archive.zip"
             },
             {
-                "name": "archive_type",
+                "name": "archiveType",
                 "label": "Archive Type",
                 "type": "string",
                 "inputType": "dropdown",
@@ -264,7 +264,7 @@
         ],
         "customParams": [
             {
-                "name": "archive_name",
+                "name": "archiveName",
                 "label": "Archive Name",
                 "type": "string",
                 "inputType": "text",
@@ -300,7 +300,7 @@
         ],
         "customParams": [
             {
-                "name": "archive_name",
+                "name": "archiveName",
                 "label": "Archive Name",
                 "type": "string",
                 "inputType": "text",
@@ -336,7 +336,7 @@
         ],
         "customParams": [
             {
-                "name": "archive_name",
+                "name": "archiveName",
                 "label": "Archive Name",
                 "type": "string",
                 "inputType": "text",
@@ -372,7 +372,7 @@
         ],
         "customParams": [
             {
-                "name": "archive_name",
+                "name": "archiveName",
                 "label": "Archive Name",
                 "type": "string",
                 "inputType": "text",
@@ -408,7 +408,7 @@
         ],
         "customParams": [
             {
-                "name": "archive_name",
+                "name": "archiveName",
                 "label": "Archive Name",
                 "type": "string",
                 "inputType": "text",
@@ -444,7 +444,7 @@
         ],
         "customParams": [
             {
-                "name": "archive_name",
+                "name": "archiveName",
                 "label": "Archive Name",
                 "type": "string",
                 "inputType": "text",

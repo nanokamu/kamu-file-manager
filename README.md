@@ -21,6 +21,7 @@ Kamu File Manager is a plug-and-play, lightweight, web-based file manager design
 - Built-in code editor feature for editing file and comparing file change on server with automatic encoding detection support (support UTF-8, UTF-8 with BOM, UTF-16LE, and UTF-16BE).
 - Guarantee 100% file integrity with additional checksum validation for upload and download.
 - Robust Testing with unit and integration test coverage for edge cases to ensure data reliability.
+- Configuration based addon extension system, Let developer able to extend action or feature to the file system without need to modify the frontend.
 - **[Planned]** Support for multiple type of storage.
 
 ---
