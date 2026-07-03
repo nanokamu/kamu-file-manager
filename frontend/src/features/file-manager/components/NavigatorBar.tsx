@@ -32,13 +32,13 @@ const NAV_ITEMS = [
 ] as const;
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
-    `flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20 ${isActive
+    `flex min-w-0 items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20 ${isActive
         ? 'bg-blue-50 text-blue-700'
         : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
     }`;
 
 const logoutButtonClass =
-    'flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 cursor-pointer transition-colors hover:bg-rose-50 hover:text-rose-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500/20';
+    'flex w-full min-w-0 items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 cursor-pointer transition-colors hover:bg-rose-50 hover:text-rose-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500/20';
 
 export function NavigatorBar({ isOpen, onToggle }: NavigatorBarProps) {
     const { logout } = useLogout();
@@ -78,7 +78,7 @@ export function NavigatorBar({ isOpen, onToggle }: NavigatorBarProps) {
 
             {isOpen && (
                 <>
-                    <nav className="flex flex-1 flex-col gap-1 overflow-y-auto p-2">
+                    <nav className="flex flex-1 flex-col gap-1 overflow-y-auto overflow-x-hidden p-2">
                         {NAV_ITEMS.map((item) => (
                             <NavLink
                                 key={item.to}
@@ -87,7 +87,7 @@ export function NavigatorBar({ isOpen, onToggle }: NavigatorBarProps) {
                                 className={navLinkClass}
                             >
                                 {item.icon}
-                                <span className="truncate">{item.label}</span>
+                                <span className="min-w-0 truncate">{item.label}</span>
                             </NavLink>
                         ))}
                     </nav>
@@ -101,7 +101,7 @@ export function NavigatorBar({ isOpen, onToggle }: NavigatorBarProps) {
                             <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                             </svg>
-                            <span className="truncate">Log out</span>
+                            <span className="min-w-0 truncate">Log out</span>
                         </button>
                     </div>
                 </>
