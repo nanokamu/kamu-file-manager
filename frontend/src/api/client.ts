@@ -1,4 +1,8 @@
 import { getToken } from '../features/user/utils/auth-token.util';
+import {
+  handleUnauthorized,
+  shouldHandleUnauthorized,
+} from '../features/user/utils/auth-session.util';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '/api';
 
@@ -38,6 +42,19 @@ function buildUrl(path: string, query?: Record<string, string | number | boolean
   return urlString;
 }
 
+function applyAuthHeaders(headers: Headers): void {
+  const token = getToken();
+  if (token) {
+    headers.set('Authorization', `Bearer ${token}`);
+  }
+}
+
+function handleResponseUnauthorized(path: string): void {
+  if (shouldHandleUnauthorized(path)) {
+    handleUnauthorized(`${window.location.pathname}${window.location.search}`);
+  }
+}
+
 async function parseErrorBody(response: Response): Promise<unknown> {
   const contentType = response.headers.get('content-type') ?? '';
 
@@ -54,12 +71,9 @@ export async function apiRequest<T>(
   init: RequestInit = {},
   query?: Record<string, string | number | boolean | undefined>,
 ): Promise<T> {
-  const token = getToken();
   const headers = new Headers(init.headers);
   headers.set('Accept', 'application/json');
-  if (token) {
-    headers.set('Authorization', `Bearer ${token}`);
-  }
+  applyAuthHeaders(headers);
 
   const response = await fetch(buildUrl(path, query), {
     ...init,
@@ -67,6 +81,10 @@ export async function apiRequest<T>(
   });
 
   if (!response.ok) {
+    if (response.status === 401) {
+      handleResponseUnauthorized(path);
+    }
+
     const body = await parseErrorBody(response);
     const message =
       typeof body === 'object' &&
@@ -95,9 +113,16 @@ export async function apiRequestBlob(
   path: string,
   query?: Record<string, string | number | boolean | undefined>,
 ): Promise<Response> {
-  const response = await fetch(buildUrl(path, query));
+  const headers = new Headers();
+  applyAuthHeaders(headers);
+
+  const response = await fetch(buildUrl(path, query), { headers });
 
   if (!response.ok) {
+    if (response.status === 401) {
+      handleResponseUnauthorized(path);
+    }
+
     const body = await parseErrorBody(response);
     throw new ApiError(
       response.status,
@@ -110,16 +135,23 @@ export async function apiRequestBlob(
 }
 
 export async function apiRequestBlobPost(path: string, body: unknown): Promise<Response> {
+  const headers = new Headers({
+    Accept: 'application/octet-stream',
+    'Content-Type': 'application/json',
+  });
+  applyAuthHeaders(headers);
+
   const response = await fetch(buildUrl(path), {
     method: 'POST',
-    headers: {
-      Accept: 'application/octet-stream',
-      'Content-Type': 'application/json',
-    },
+    headers,
     body: JSON.stringify(body),
   });
 
   if (!response.ok) {
+    if (response.status === 401) {
+      handleResponseUnauthorized(path);
+    }
+
     const errorBody = await parseErrorBody(response);
     throw new ApiError(
       response.status,

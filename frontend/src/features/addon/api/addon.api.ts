@@ -1,4 +1,9 @@
 import { ApiError, apiRequest, buildUrl } from '../../../api/client';
+import { getToken } from '../../user/utils/auth-token.util';
+import {
+  handleUnauthorized,
+  shouldHandleUnauthorized,
+} from '../../user/utils/auth-session.util';
 import type { AddonConfig, ApiTemplate, ReturnTemplateJson } from '../../../shared/types/addon.types';
 
 export function normalizeAddonPath(apiUrl: string): string {
@@ -40,6 +45,10 @@ export function invokeAddonEnvelopeWithProgress(
     xhr.open(template.apiType, url);
     xhr.setRequestHeader('Content-Type', 'application/json');
     xhr.setRequestHeader('Accept', 'application/octet-stream');
+    const token = getToken();
+    if (token) {
+      xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+    }
     xhr.responseType = 'arraybuffer';
 
     xhr.addEventListener('progress', (event) => {
@@ -52,6 +61,10 @@ export function invokeAddonEnvelopeWithProgress(
       if (xhr.status >= 200 && xhr.status < 300) {
         resolve(xhr.response as ArrayBuffer);
         return;
+      }
+
+      if (xhr.status === 401 && shouldHandleUnauthorized(path)) {
+        handleUnauthorized(`${window.location.pathname}${window.location.search}`);
       }
 
       let errorBody: unknown;
