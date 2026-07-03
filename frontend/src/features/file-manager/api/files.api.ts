@@ -1,4 +1,8 @@
-import { ApiError, apiRequest, apiRequestBlob, apiRequestBlobPost, buildUrl } from '../../../api/client';
+import { ApiError, apiRequest, apiRequestBlob, apiRequestBlobPost, applyXHRAuthHeader, buildUrl } from '../../../api/client';
+import {
+  handleUnauthorized,
+  shouldHandleUnauthorized,
+} from '../../user/utils/auth-session.util';
 import { detectFileEncoding } from '../../../shared/utils/encoding.util';
 import type {
   CopyMoveFileOptions,
@@ -125,6 +129,10 @@ export function uploadFileWithProgress(
         return;
       }
 
+      if (xhr.status === 401 && shouldHandleUnauthorized('files/upload')) {
+        handleUnauthorized(`${window.location.pathname}${window.location.search}`);
+      }
+
       let body: unknown;
       try {
         body = JSON.parse(xhr.responseText);
@@ -154,6 +162,7 @@ export function uploadFileWithProgress(
     xhr.open('POST', url);
     xhr.setRequestHeader('Accept', 'application/json');
     xhr.setRequestHeader('Content-Type', contentType);
+    applyXHRAuthHeader(xhr);
     xhr.send(file);
   });
 }

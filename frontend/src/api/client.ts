@@ -49,6 +49,13 @@ function applyAuthHeaders(headers: Headers): void {
   }
 }
 
+export function applyXHRAuthHeader(xhr: XMLHttpRequest): void {
+  const token = getToken();
+  if (token) {
+    xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+  }
+}
+
 function handleResponseUnauthorized(path: string): void {
   if (shouldHandleUnauthorized(path)) {
     handleUnauthorized(`${window.location.pathname}${window.location.search}`);

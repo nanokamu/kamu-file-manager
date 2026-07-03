@@ -1,10 +1,18 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('../../../api/client', () => ({
-  apiRequest: vi.fn(),
-  apiRequestBlob: vi.fn(),
-  apiRequestBlobPost: vi.fn(),
+vi.mock('../../user/utils/auth-token.util', () => ({
+  getToken: vi.fn(() => 'test-token'),
 }));
+
+vi.mock('../../../api/client', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../../api/client')>();
+  return {
+    ...actual,
+    apiRequest: vi.fn(),
+    apiRequestBlob: vi.fn(),
+    apiRequestBlobPost: vi.fn(),
+  };
+});
 
 import { apiRequest, apiRequestBlob, apiRequestBlobPost } from '../../../api/client';
 import { decodeBlobAsText } from '../../../shared/utils/encoding.util';
@@ -17,6 +25,7 @@ import {
   listAllFilePaths,
   listFiles,
   uploadFile,
+  uploadFileWithProgress,
 } from './files.api';
 
 const mockApiRequest = vi.mocked(apiRequest);
@@ -265,6 +274,76 @@ describe('files.api', () => {
           size: 999,
         }),
       );
+    });
+  });
+
+  describe('uploadFileWithProgress', () => {
+    const OriginalXHR = globalThis.XMLHttpRequest;
+
+    afterEach(() => {
+      globalThis.XMLHttpRequest = OriginalXHR;
+    });
+
+    it('sets Authorization header and POSTs to files/upload', async () => {
+      const headers = new Map<string, string>();
+      let openedMethod = '';
+      let openedUrl = '';
+
+      class MockXHR {
+        upload = { addEventListener: vi.fn() };
+        status = 200;
+        responseText = JSON.stringify({
+          path: 'sample.txt',
+          name: 'sample.txt',
+          type: 'file',
+        });
+
+        open(method: string, url: string) {
+          openedMethod = method;
+          openedUrl = url;
+        }
+
+        setRequestHeader(name: string, value: string) {
+          headers.set(name, value);
+        }
+
+        send = vi.fn(() => {
+          for (const listener of this.loadListeners) {
+            listener();
+          }
+        });
+
+        private loadListeners: Array<() => void> = [];
+
+        addEventListener(event: string, listener: () => void) {
+          if (event === 'load') {
+            this.loadListeners.push(listener);
+          }
+        }
+      }
+
+      globalThis.XMLHttpRequest = MockXHR as unknown as typeof XMLHttpRequest;
+
+      const file = new File(['data'], 'sample.txt', { type: 'text/plain' });
+      const result = await uploadFileWithProgress({
+        locator: 'folder',
+        fileName: 'sample.txt',
+        file,
+        size: file.size,
+        checksumAlgorithm: 'sha256',
+        checksumValue: 'abc',
+      });
+
+      expect(openedMethod).toBe('POST');
+      expect(openedUrl).toContain('files/upload');
+      expect(headers.get('Authorization')).toBe('Bearer test-token');
+      expect(headers.get('Accept')).toBe('application/json');
+      expect(headers.get('Content-Type')).toBe('text/plain');
+      expect(result).toEqual({
+        path: 'sample.txt',
+        name: 'sample.txt',
+        type: 'file',
+      });
     });
   });
 
