@@ -10,33 +10,13 @@ import { useAddonFlow } from '../addon/hooks/useAddonFlow';
 import type { FileItem } from './types';
 import { ActionBar } from './components/ActionBar';
 import { Breadcrumbs } from './components/Breadcrumbs';
-import { NavigatorBar } from './components/NavigatorBar';
 import { TextInputDialog } from '../../shared/components/TextInputDialog';
 import { FileTableArea } from './components/FileTableArea';
-import {
-    NAVIGATOR_BAR_DEFAULT_OPEN,
-    NAVIGATOR_BAR_ENABLED,
-} from './config/file-manager.config';
+import { NavigatorBar } from '../navigation/components/NavigatorBar';
+import { NAVIGATOR_BAR_ENABLED } from '../navigation/config/navigation.config';
+import { useNavigatorBarOpen } from '../navigation/hooks/useNavigatorBarOpen';
 import { useFileActions } from './hooks/useFileActions';
 import { getRangeIds } from './utils/file-selection.util';
-
-const NAV_OPEN_STORAGE_KEY = 'fileManager.navOpen';
-
-function readNavOpenPreference(): boolean {
-    if (!NAVIGATOR_BAR_ENABLED) {
-        return false;
-    }
-
-    try {
-        const stored = localStorage.getItem(NAV_OPEN_STORAGE_KEY);
-        if (stored === null) {
-            return NAVIGATOR_BAR_DEFAULT_OPEN;
-        }
-        return stored === 'true';
-    } catch {
-        return NAVIGATOR_BAR_DEFAULT_OPEN;
-    }
-}
 
 export default function FileManager() {
     const {
@@ -65,6 +45,7 @@ export default function FileManager() {
         currentFolderId,
     } = useFileActions();
 
+    const { isOpen, toggle } = useNavigatorBarOpen();
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
     const [openMenuId, setOpenMenuId] = useState<string | null>(null);
@@ -75,24 +56,11 @@ export default function FileManager() {
     } | null>(null);
     const [renameTarget, setRenameTarget] = useState<FileItem | null>(null);
     const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
-    const [isNavOpen, setIsNavOpen] = useState(readNavOpenPreference);
     const anchorIdRef = useRef<string | null>(null);
 
     useEffect(() => {
         document.title = 'Files';
     }, []);
-
-    useEffect(() => {
-        if (!NAVIGATOR_BAR_ENABLED) {
-            return;
-        }
-
-        try {
-            localStorage.setItem(NAV_OPEN_STORAGE_KEY, String(isNavOpen));
-        } catch {
-            // ignore storage errors
-        }
-    }, [isNavOpen]);
 
     const selectedFileIds = useMemo(() => {
         const validIds = new Set(folderItems.map((item) => item.id));
@@ -306,8 +274,8 @@ export default function FileManager() {
         >
             {NAVIGATOR_BAR_ENABLED && (
                 <NavigatorBar
-                    isOpen={isNavOpen}
-                    onToggle={() => setIsNavOpen((open) => !open)}
+                    isOpen={isOpen}
+                    onToggle={toggle}
                 />
             )}
             <div className="flex min-h-0 min-w-0 flex-1 flex-col p-2">

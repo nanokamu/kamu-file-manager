@@ -2,34 +2,12 @@ import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { ConfirmModal } from '../../../shared/components/ConfirmModal';
 import { useLogout } from '../../user/hooks/useLogout';
+import { NAV_ITEMS } from '../config/navigation.config';
 
 interface NavigatorBarProps {
     isOpen: boolean;
     onToggle: () => void;
 }
-
-const NAV_ITEMS = [
-    {
-        to: '/',
-        label: 'Files',
-        end: true,
-        icon: (
-            <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
-            </svg>
-        ),
-    },
-    {
-        to: '/editor',
-        label: 'Code Editor',
-        end: false,
-        icon: (
-            <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-            </svg>
-        ),
-    },
-] as const;
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
     `flex min-w-0 items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20 ${isActive
