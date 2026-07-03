@@ -152,3 +152,7 @@ file_items_map
 command_notes
 
 build_space
+
+backend_nestjs/src/modules/addon/config/addon.config.sample_01.json
+backend_nestjs/src/modules/addon/config/addon.config.sample_02.json
+
