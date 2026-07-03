@@ -8,7 +8,7 @@ interface BreadcrumbsProps {
 
 export function Breadcrumbs({ crumbs, onCrumbClick }: BreadcrumbsProps) {
     return (
-        <div className="shrink-0 overflow-x-auto whitespace-nowrap px-6 py-3 border-b border-slate-100 bg-white flex items-center gap-2 text-sm text-slate-500">
+        <div className="shrink-0 overflow-x-auto whitespace-nowrap px-4 py-3 border-b border-slate-100 bg-white flex items-center gap-2 text-sm text-slate-500">
             {crumbs.map((crumb, idx) => (
                 <React.Fragment key={crumb.id ?? 'root'}>
                     {idx > 0 && <span className="text-slate-300">/</span>}

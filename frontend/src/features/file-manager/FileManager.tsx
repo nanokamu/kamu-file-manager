@@ -301,9 +301,8 @@ export default function FileManager() {
 
     return (
         <div
-            className={`flex flex-1 min-h-0 gap-0 bg-slate-50 p-6 font-sans ${
-                NAVIGATOR_BAR_ENABLED ? '' : 'flex-col'
-            }`}
+            className={`flex flex-1 min-h-0 gap-0 bg-slate-50 font-sans ${NAVIGATOR_BAR_ENABLED ? '' : 'flex-col'
+                }`}
         >
             {NAVIGATOR_BAR_ENABLED && (
                 <NavigatorBar
@@ -311,66 +310,68 @@ export default function FileManager() {
                     onToggle={() => setIsNavOpen((open) => !open)}
                 />
             )}
-            <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+            <div className="flex min-h-0 min-w-0 flex-1 flex-col p-2">
+                <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-slate-300/80 bg-white">
 
-                <ActionBar
-                    searchQuery={searchQuery}
-                    setSearchQuery={setSearchQuery}
-                    selectedCount={selectedFileIds.length}
-                    clipboardCount={clipboard?.sources.length ?? 0}
-                    onClearSelection={clearSelection}
-                    onClearClipboard={clearClipboard}
-                    onCopy={handleCopy}
-                    onMove={handleMove}
-                    onPaste={() => void pasteItems()}
-                    onRequestDelete={handleRequestDelete}
-                    onNewFolder={() => setIsCreateFolderOpen(true)}
-                    onUpload={uploadFiles}
-                    showAddon={applicableTemplates.length > 0}
-                    onAddon={openAddonMenu}
-                />
+                    <ActionBar
+                        searchQuery={searchQuery}
+                        setSearchQuery={setSearchQuery}
+                        selectedCount={selectedFileIds.length}
+                        clipboardCount={clipboard?.sources.length ?? 0}
+                        onClearSelection={clearSelection}
+                        onClearClipboard={clearClipboard}
+                        onCopy={handleCopy}
+                        onMove={handleMove}
+                        onPaste={() => void pasteItems()}
+                        onRequestDelete={handleRequestDelete}
+                        onNewFolder={() => setIsCreateFolderOpen(true)}
+                        onUpload={uploadFiles}
+                        showAddon={applicableTemplates.length > 0}
+                        onAddon={openAddonMenu}
+                    />
 
-                <Breadcrumbs
-                    crumbs={breadcrumbs}
-                    onCrumbClick={handleBreadcrumbClick}
-                />
+                    <Breadcrumbs
+                        crumbs={breadcrumbs}
+                        onCrumbClick={handleBreadcrumbClick}
+                    />
 
-                <FileTableArea
-                    items={filteredItems}
-                    selectedFiles={selectedFileIds}
-                    openMenuId={openMenuId}
-                    anchorIdRef={anchorIdRef}
-                    keyboardDisabled={isKeyboardDisabled}
-                    onRowClick={handleRowClick}
-                    onToggleSelect={handleSelectFile}
-                    onRangeSelect={applyRangeSelection}
-                    onMarqueeSelect={applyMarqueeSelection}
-                    onDragSelectEnd={(anchorId) => {
-                        anchorIdRef.current = anchorId;
-                    }}
-                    onEmptyAreaClick={() => {
-                        if (selectedFileIds.length > 0) {
-                            clearSelection();
-                        }
-                    }}
-                    onKeyboardNavigate={handleKeyboardNavigate}
-                    onKeyboardToggleSelect={handleKeyboardToggleSelect}
-                    onKeyboardSelectAll={handleSelectAll}
-                    onKeyboardClearSelection={clearSelection}
-                    onKeyboardCopy={handleCopy}
-                    onKeyboardMove={handleMove}
-                    onKeyboardPaste={() => void pasteItems()}
-                    onKeyboardRequestDelete={handleRequestDelete}
-                    onKeyboardRename={setRenameTarget}
-                    onToggleMenu={(id) => setOpenMenuId((prev) => (prev === id ? null : id))}
-                    onCloseMenu={() => setOpenMenuId(null)}
-                    onOpenInEditor={openInEditor}
-                    onDownload={downloadItem}
-                    onDownloadFolderAsZip={downloadFolderAsZipItem}
-                    onRename={setRenameTarget}
-                    onUploadFiles={(files) => void uploadFiles(files)}
-                />
+                    <FileTableArea
+                        items={filteredItems}
+                        selectedFiles={selectedFileIds}
+                        openMenuId={openMenuId}
+                        anchorIdRef={anchorIdRef}
+                        keyboardDisabled={isKeyboardDisabled}
+                        onRowClick={handleRowClick}
+                        onToggleSelect={handleSelectFile}
+                        onRangeSelect={applyRangeSelection}
+                        onMarqueeSelect={applyMarqueeSelection}
+                        onDragSelectEnd={(anchorId) => {
+                            anchorIdRef.current = anchorId;
+                        }}
+                        onEmptyAreaClick={() => {
+                            if (selectedFileIds.length > 0) {
+                                clearSelection();
+                            }
+                        }}
+                        onKeyboardNavigate={handleKeyboardNavigate}
+                        onKeyboardToggleSelect={handleKeyboardToggleSelect}
+                        onKeyboardSelectAll={handleSelectAll}
+                        onKeyboardClearSelection={clearSelection}
+                        onKeyboardCopy={handleCopy}
+                        onKeyboardMove={handleMove}
+                        onKeyboardPaste={() => void pasteItems()}
+                        onKeyboardRequestDelete={handleRequestDelete}
+                        onKeyboardRename={setRenameTarget}
+                        onToggleMenu={(id) => setOpenMenuId((prev) => (prev === id ? null : id))}
+                        onCloseMenu={() => setOpenMenuId(null)}
+                        onOpenInEditor={openInEditor}
+                        onDownload={downloadItem}
+                        onDownloadFolderAsZip={downloadFolderAsZipItem}
+                        onRename={setRenameTarget}
+                        onUploadFiles={(files) => void uploadFiles(files)}
+                    />
 
+                </div>
             </div>
 
             {isCreateFolderOpen && (

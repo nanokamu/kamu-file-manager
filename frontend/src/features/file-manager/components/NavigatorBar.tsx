@@ -29,10 +29,9 @@ const NAV_ITEMS = [
 ] as const;
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
-    `flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20 ${
-        isActive
-            ? 'bg-blue-50 text-blue-700'
-            : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+    `flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20 ${isActive
+        ? 'bg-blue-50 text-blue-700'
+        : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
     }`;
 
 export function NavigatorBar({ isOpen, onToggle }: NavigatorBarProps) {
@@ -41,9 +40,8 @@ export function NavigatorBar({ isOpen, onToggle }: NavigatorBarProps) {
     return (
         <aside
             aria-label="App navigation"
-            className={`flex shrink-0 flex-col overflow-hidden border-r border-slate-200 bg-slate-50 transition-[width] duration-200 ${
-                isOpen ? 'w-52' : 'w-10'
-            }`}
+            className={`flex shrink-0 flex-col overflow-hidden border-r border-slate-300/80 bg-slate-50 transition-[width] duration-200 ${isOpen ? 'w-52' : 'w-10'
+                }`}
         >
             <button
                 type="button"
@@ -51,9 +49,8 @@ export function NavigatorBar({ isOpen, onToggle }: NavigatorBarProps) {
                 aria-expanded={isOpen}
                 aria-label={toggleLabel}
                 title={toggleLabel}
-                className={`flex w-full shrink-0 items-center border-b border-slate-200 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500/20 ${
-                    isOpen ? 'justify-between gap-2 px-3 py-2.5' : 'justify-center py-3'
-                }`}
+                className={`flex w-full shrink-0 items-center border-b border-slate-200 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500/20 ${isOpen ? 'justify-between gap-2 px-3 py-2.5' : 'justify-center py-3'
+                    }`}
             >
                 {isOpen && (
                     <span className="text-xs font-semibold uppercase tracking-wider">
