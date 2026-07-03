@@ -32,6 +32,7 @@ const baseTemplate: ApiTemplate = {
     filePattern: '.*',
     enabledFolder: true,
     folderPattern: '.*',
+    folderIdPattern: '.*',
   },
 };
 

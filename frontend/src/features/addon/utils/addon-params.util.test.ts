@@ -41,6 +41,7 @@ const baseTemplate: ApiTemplate = {
     filePattern: '.*',
     enabledFolder: true,
     folderPattern: '.*',
+    folderIdPattern: '.*',
   },
 };
 
@@ -75,6 +76,7 @@ describe('addon-params.util', () => {
           filePattern: '.*',
           enabledFolder: false,
           folderPattern: '.*',
+          folderIdPattern: '.*',
         },
       },
       {
@@ -85,13 +87,14 @@ describe('addon-params.util', () => {
           filePattern: '.*',
           enabledFolder: true,
           folderPattern: '.*',
+          folderIdPattern: '.*',
         },
       },
     ];
 
     it('returns templates that allow all types in mixed selection', () => {
       const selected = [makeItem('/a.txt', 'document'), makeItem('/folder', 'folder')];
-      const names = filterApplicableTemplates(config, selected).map((t) => t.menuName);
+      const names = filterApplicableTemplates(config, selected, null).map((t) => t.menuName);
       expect(names).toContain('download as zip');
       expect(names).not.toContain('files only');
       expect(names).not.toContain('folders only');
@@ -99,7 +102,7 @@ describe('addon-params.util', () => {
 
     it('excludes folder-only templates when only files are selected', () => {
       const selected = [makeItem('/a.txt', 'document')];
-      const names = filterApplicableTemplates(config, selected).map((t) => t.menuName);
+      const names = filterApplicableTemplates(config, selected, null).map((t) => t.menuName);
       expect(names).toContain('download as zip');
       expect(names).toContain('files only');
       expect(names).not.toContain('folders only');
@@ -107,14 +110,14 @@ describe('addon-params.util', () => {
 
     it('excludes file-only templates when only folders are selected', () => {
       const selected = [makeItem('/folder', 'folder')];
-      const names = filterApplicableTemplates(config, selected).map((t) => t.menuName);
+      const names = filterApplicableTemplates(config, selected, null).map((t) => t.menuName);
       expect(names).toContain('download as zip');
       expect(names).toContain('folders only');
       expect(names).not.toContain('files only');
     });
 
     it('returns no templates when selection is empty and none allow blank auto params', () => {
-      expect(filterApplicableTemplates(config, [])).toEqual([]);
+      expect(filterApplicableTemplates(config, [], null)).toEqual([]);
     });
 
     it('returns only allowBlankAutoParams templates when selection is empty', () => {
@@ -125,7 +128,7 @@ describe('addon-params.util', () => {
       };
       const mixedConfig = [baseTemplate, blankTemplate];
 
-      const names = filterApplicableTemplates(mixedConfig, []).map((t) => t.menuName);
+      const names = filterApplicableTemplates(mixedConfig, [], null).map((t) => t.menuName);
       expect(names).toEqual(['blank locator call']);
     });
 
@@ -139,17 +142,18 @@ describe('addon-params.util', () => {
             filePattern: '\\.txt$',
             enabledFolder: true,
             folderPattern: '.*',
+            folderIdPattern: '.*',
           },
         },
       ];
       const matching = [makeItem('report.txt', 'document')];
       const nonMatching = [makeItem('report.pdf', 'pdf')];
 
-      expect(filterApplicableTemplates(patternConfig, matching).map((t) => t.menuName)).toContain(
+      expect(filterApplicableTemplates(patternConfig, matching, null).map((t) => t.menuName)).toContain(
         'txt files only',
       );
       expect(
-        filterApplicableTemplates(patternConfig, nonMatching).map((t) => t.menuName),
+        filterApplicableTemplates(patternConfig, nonMatching, null).map((t) => t.menuName),
       ).not.toContain('txt files only');
     });
 
@@ -163,18 +167,85 @@ describe('addon-params.util', () => {
             filePattern: '.*',
             enabledFolder: true,
             folderPattern: '^projects/',
+            folderIdPattern: '.*',
           },
         },
       ];
       const matching = [makeItem('projects/design', 'folder')];
       const nonMatching = [makeItem('assets/icons', 'folder')];
 
-      expect(filterApplicableTemplates(patternConfig, matching).map((t) => t.menuName)).toContain(
+      expect(filterApplicableTemplates(patternConfig, matching, null).map((t) => t.menuName)).toContain(
         'projects folder only',
       );
       expect(
-        filterApplicableTemplates(patternConfig, nonMatching).map((t) => t.menuName),
+        filterApplicableTemplates(patternConfig, nonMatching, null).map((t) => t.menuName),
       ).not.toContain('projects folder only');
+    });
+
+    it('includes templates when current folder id matches folderIdPattern', () => {
+      const patternConfig = [
+        {
+          ...baseTemplate,
+          menuName: 'vat folder only',
+          filterRule: {
+            enabledFile: true,
+            filePattern: '.*',
+            enabledFolder: true,
+            folderPattern: '.*',
+            folderIdPattern: '^VAT.*',
+          },
+        },
+      ];
+      const selected = [makeItem('report.zip', 'document')];
+
+      expect(
+        filterApplicableTemplates(patternConfig, selected, 'VAT/invoices').map((t) => t.menuName),
+      ).toContain('vat folder only');
+    });
+
+    it('excludes templates when current folder id does not match folderIdPattern', () => {
+      const patternConfig = [
+        {
+          ...baseTemplate,
+          menuName: 'vat folder only',
+          filterRule: {
+            enabledFile: true,
+            filePattern: '.*',
+            enabledFolder: true,
+            folderPattern: '.*',
+            folderIdPattern: '^VAT.*',
+          },
+        },
+      ];
+      const selected = [makeItem('report.zip', 'document')];
+
+      expect(
+        filterApplicableTemplates(patternConfig, selected, null).map((t) => t.menuName),
+      ).not.toContain('vat folder only');
+      expect(
+        filterApplicableTemplates(patternConfig, selected, 'projects/design').map(
+          (t) => t.menuName,
+        ),
+      ).not.toContain('vat folder only');
+    });
+
+    it('applies folderIdPattern when selection is empty and allowBlankAutoParams is true', () => {
+      const blankTemplate: ApiTemplate = {
+        ...baseTemplate,
+        menuName: 'blank in vat folder',
+        allowBlankAutoParams: true,
+        filterRule: {
+          ...baseTemplate.filterRule,
+          folderIdPattern: '^VAT.*',
+        },
+      };
+
+      expect(
+        filterApplicableTemplates([blankTemplate], [], 'VAT/invoices').map((t) => t.menuName),
+      ).toEqual(['blank in vat folder']);
+      expect(filterApplicableTemplates([blankTemplate], [], null).map((t) => t.menuName)).toEqual(
+        [],
+      );
     });
   });
 

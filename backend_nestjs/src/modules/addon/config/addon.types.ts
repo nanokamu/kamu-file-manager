@@ -19,10 +19,13 @@ export interface CustomParam {
 }
 
 export interface FilterRule {
-  enabledFile: boolean;
+  enabledFile: boolean; // File is allowed to be selected
   filePattern: string; // Regex pattern for file locator
-  enabledFolder: boolean;
+  enabledFolder: boolean; // Folder is allowed to be selected
   folderPattern: string; // Regex pattern for folder locator
+  // Regex pattern for folder id
+  // folderIdPattern is act to filter folderId
+  folderIdPattern: string;
 }
 
 export interface ApiTemplate {

@@ -20,16 +20,26 @@ export function matchesLocatorPattern(pattern: string, locator: string): boolean
 export function filterApplicableTemplates(
   config: AddonConfig,
   selectedItems: FileItem[],
+  currentFolderId: string | null,
 ): ApiTemplate[] {
+  const currentLocator = toCurrentFolderLocator(currentFolderId);
+
   if (selectedItems.length === 0) {
-    return config.filter((template) => template.allowBlankAutoParams);
+    return config.filter(
+      (template) =>
+        template.allowBlankAutoParams &&
+        matchesLocatorPattern(template.filterRule.folderIdPattern, currentLocator),
+    );
   }
 
   const files = selectedItems.filter((item) => item.type !== 'folder');
   const folders = selectedItems.filter((item) => item.type === 'folder');
 
   return config.filter((template) => {
-    const { enabledFile, filePattern, enabledFolder, folderPattern } = template.filterRule;
+    const { enabledFile, filePattern, enabledFolder, folderPattern, folderIdPattern } =
+      template.filterRule;
+
+    const folderIdOk = matchesLocatorPattern(folderIdPattern, currentLocator);
 
     const filesOk =
       files.length === 0 ||
@@ -40,7 +50,7 @@ export function filterApplicableTemplates(
       (enabledFolder &&
         folders.every((folder) => matchesLocatorPattern(folderPattern, folder.id)));
 
-    return filesOk && foldersOk;
+    return folderIdOk && filesOk && foldersOk;
   });
 }
 

@@ -31,6 +31,7 @@ export interface FilterRule {
   filePattern: string;
   enabledFolder: boolean;
   folderPattern: string;
+  folderIdPattern: string;
 }
 
 export interface ApiTemplate {

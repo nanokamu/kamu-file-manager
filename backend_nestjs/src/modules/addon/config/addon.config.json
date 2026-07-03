@@ -32,7 +32,8 @@
             "enabledFile": true,
             "filePattern": ".*",
             "enabledFolder": true,
-            "folderPattern": ".*"
+            "folderPattern": ".*",
+            "folderIdPattern": ".*"
         }
     },
     {
@@ -101,7 +102,8 @@
             "enabledFile": true,
             "filePattern": ".*",
             "enabledFolder": true,
-            "folderPattern": ".*"
+            "folderPattern": ".*",
+            "folderIdPattern": ".*"
         }
     },
     {
@@ -170,7 +172,8 @@
             "enabledFile": true,
             "filePattern": ".*",
             "enabledFolder": false,
-            "folderPattern": ".*"
+            "folderPattern": ".*",
+            "folderIdPattern": ".*"
         }
     },
     {
@@ -239,7 +242,8 @@
             "enabledFile": true,
             "filePattern": "[.]txt$",
             "enabledFolder": false,
-            "folderPattern": ".*"
+            "folderPattern": ".*",
+            "folderIdPattern": ".*"
         }
     },
     {
@@ -275,7 +279,8 @@
             "enabledFile": true,
             "filePattern": ".*",
             "enabledFolder": true,
-            "folderPattern": ".*"
+            "folderPattern": ".*",
+            "folderIdPattern": ".*"
         }
     },
     {
@@ -311,7 +316,8 @@
             "enabledFile": true,
             "filePattern": ".*",
             "enabledFolder": true,
-            "folderPattern": ".*"
+            "folderPattern": ".*",
+            "folderIdPattern": ".*"
         }
     },
     {
@@ -347,7 +353,59 @@
             "enabledFile": true,
             "filePattern": ".*",
             "enabledFolder": true,
-            "folderPattern": ".*"
+            "folderPattern": ".*",
+            "folderIdPattern": ".*"
+        }
+    },
+    {
+        "menuName": "Special Menu 01",
+        "apiType": "POST",
+        "apiUrl": "/api/addonCallWithRedirect",
+        "hasReturnMessage": false,
+        "hasReturnFile": false,
+        "returnMode": "redirect",
+        "hasFileListRefresh": false,
+        "fileListRefreshDelayMs": 2000,
+        "allowBlankAutoParams": true,
+        "autoParams": [
+            {
+                "name": "locators",
+                "type": "string[]"
+            },
+            {
+                "name": "currentFolderLocator",
+                "type": "string"
+            }
+        ],
+        "customParams": [
+            {
+                "name": "archiveName",
+                "label": "Archive Name",
+                "type": "string",
+                "inputType": "dropdown",
+                "options": [
+                    {
+                        "value": "Mode A",
+                        "label": "Mode A"
+                    },
+                    {
+                        "value": "Mode B",
+                        "label": "Mode B"
+                    },
+                    {
+                        "value": "N8N C",
+                        "label": "N8N C"
+                    }
+                ],
+                "defaultValue": "Mode B"
+            }
+        ],
+        "filterRule": {
+            "enabledFile": true,
+            "filePattern": "[.]zip$",
+            "enabledFolder": false,
+            "folderPattern": ".*",
+            "folderIdPattern": "^VAT.*"
         }
     }
 ]

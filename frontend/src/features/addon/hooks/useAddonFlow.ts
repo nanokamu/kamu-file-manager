@@ -115,8 +115,8 @@ export function useAddonFlow({
     if (!config) {
       return [];
     }
-    return filterApplicableTemplates(config, selectedItems);
-  }, [config, selectedItems]);
+    return filterApplicableTemplates(config, selectedItems, currentFolderId);
+  }, [config, selectedItems, currentFolderId]);
 
   const openMenu = useCallback(() => {
     setStep('menu');
