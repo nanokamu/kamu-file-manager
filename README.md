@@ -6,14 +6,14 @@
 
 Kamu File Manager is a plug-and-play, lightweight, web-based file manager designed to allow easy file access via any web browser. Kamu File Manager is built for effortless deployment and can run on any machine via a Docker image.
 
----
+
 
 ## Tech Stack
 
 - **Frontend:** React + Tailwind CSS
 - **Backend:** Node.js + NestJS
 
----
+
 
 ## Main Features
 
@@ -24,7 +24,7 @@ Kamu File Manager is a plug-and-play, lightweight, web-based file manager design
 - Configuration based addon extension system, Let developer able to extend action or feature to the file system without need to modify the frontend.
 - **[Planned]** Support for multiple type of storage.
 
----
+
 
 ## How to Setup Development Environment
 
@@ -33,7 +33,7 @@ Kamu File Manager is a plug-and-play, lightweight, web-based file manager design
 3. Install dependecies on frontend and backend using pnpm install.
 4. Run both frontend and backend server to access Kamu File Manager via web browser.
 
----
+
 
 ## How to Build the Docker Image
 
@@ -45,7 +45,7 @@ export UID=$(id -u) GID=$(id -g)
 docker compose -f docker-compose.prod.yml up
 ```
 
----
+
 
 ## License
 
