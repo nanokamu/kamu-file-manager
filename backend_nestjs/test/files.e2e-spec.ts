@@ -17,17 +17,47 @@ import {
   seedDefaultStorageFixtureNew,
   TEST_STORAGE_ROOT,
 } from './helpers/storage.fixture';
+import {
+  createTestAuthEnv,
+  createTestUsersConfig,
+  createTestUsersTempDir,
+  loginForTest,
+} from './helpers/users.fixture';
 
 function isZipBuffer(buffer: Buffer): boolean {
   return buffer.length >= 4 && buffer[0] === 0x50 && buffer[1] === 0x4b;
+}
+
+function authedRequest(app: INestApplication<App>, accessToken: string) {
+  const server = app.getHttpServer();
+  const authHeader = `Bearer ${accessToken}`;
+
+  return {
+    get: (path: string) =>
+      request(server).get(path).set('Authorization', authHeader),
+    post: (path: string) =>
+      request(server).post(path).set('Authorization', authHeader),
+    delete: (path: string) =>
+      request(server).delete(path).set('Authorization', authHeader),
+  };
 }
 
 describe('FilesController (e2e)', () => {
   let app: INestApplication<App>;
   let storagePathService: StoragePathService;
   let rootDataDir: string;
+  let accessToken: string;
+  let tempDir: string;
+  let authed: ReturnType<typeof authedRequest>;
 
   beforeEach(async () => {
+    tempDir = createTestUsersTempDir();
+    const { configPath } = await createTestUsersConfig(tempDir);
+    const testEnv = createTestAuthEnv(configPath);
+    process.env.JWT_SECRET = testEnv.JWT_SECRET!;
+    process.env.JWT_EXPIRES_IN = testEnv.JWT_EXPIRES_IN!;
+    process.env.USERS_CONFIG_PATH = configPath;
+
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     })
@@ -39,6 +69,9 @@ describe('FilesController (e2e)', () => {
     configureApp(app);
     await app.init();
 
+    accessToken = await loginForTest(app);
+    authed = authedRequest(app, accessToken);
+
     storagePathService = moduleFixture.get(StoragePathService);
     rootDataDir = storagePathService.resolveStoragePath();
 
@@ -49,6 +82,8 @@ describe('FilesController (e2e)', () => {
   });
 
   afterEach(async () => {
+    delete process.env.USERS_CONFIG_PATH;
+    delete process.env.JWT_SECRET;
     clearDefaultStorageFixture(rootDataDir);
     await app.close();
   });
@@ -59,9 +94,7 @@ describe('FilesController (e2e)', () => {
         .map((template) => template.path)
         .sort();
 
-      const response = await request(app.getHttpServer()).get(
-        apiPath('/filelist'),
-      );
+      const response = await authed.get(apiPath('/filelist'));
       const body = response.body as { files: string[] };
 
       expect(response.status).toBe(200);
@@ -70,10 +103,12 @@ describe('FilesController (e2e)', () => {
   });
 
   describe('GET /api/files', () => {
+    it('rejects unauthenticated requests', async () => {
+      await request(app.getHttpServer()).get(apiPath('/files')).expect(401);
+    });
+
     it('returns root-level entries', async () => {
-      const response = await request(app.getHttpServer()).get(
-        apiPath('/files'),
-      );
+      const response = await authed.get(apiPath('/files'));
       const body = response.body as UnifiedResource[];
 
       expect(response.status).toBe(200);
@@ -89,7 +124,7 @@ describe('FilesController (e2e)', () => {
     });
 
     it('returns nested entries when locator is provided', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await authed
         .get(apiPath('/files'))
         .query({
           locator: 'nestitems',
@@ -106,7 +141,7 @@ describe('FilesController (e2e)', () => {
 
   describe('GET /api/files/metadata', () => {
     it('returns metadata for a file', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await authed
         .get(apiPath('/files/metadata'))
         .query({ locator: 'mockfile_text_01.txt' });
       const body = response.body as UnifiedResource;
@@ -122,7 +157,7 @@ describe('FilesController (e2e)', () => {
     });
 
     it('returns 404 when locator does not exist', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await authed
         .get(apiPath('/files/metadata'))
         .query({ locator: 'missing-file.txt' });
 
@@ -134,7 +169,7 @@ describe('FilesController (e2e)', () => {
     it('returns file bytes and checksum headers', async () => {
       const template = buildMockFile()['mockfile_text_01.txt'];
 
-      const response = await request(app.getHttpServer())
+      const response = await authed
         .get(apiPath('/files/download'))
         .query({ locator: 'mockfile_text_01.txt' })
         .buffer(true)
@@ -153,7 +188,7 @@ describe('FilesController (e2e)', () => {
 
   describe('POST /api/files/download/zip', () => {
     it('returns a valid zip archive', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await authed
         .post(apiPath('/files/download/zip'))
         .send({
           locators: [
@@ -181,7 +216,7 @@ describe('FilesController (e2e)', () => {
       const bytes = Buffer.from('my upload text', 'utf8');
       const checksumValue = createHash('sha256').update(bytes).digest('hex');
 
-      const uploadResponse = await request(app.getHttpServer())
+      const uploadResponse = await authed
         .post(apiPath('/files/upload'))
         .query({
           locator: '',
@@ -201,7 +236,7 @@ describe('FilesController (e2e)', () => {
         size: bytes.length,
       });
 
-      const downloadResponse = await request(app.getHttpServer())
+      const downloadResponse = await authed
         .get(apiPath('/files/download'))
         .query({ locator: fileName })
         .buffer(true)
@@ -218,7 +253,7 @@ describe('FilesController (e2e)', () => {
     it('returns 400 when required upload query params are missing', async () => {
       const bytes = Buffer.from('invalid upload', 'utf8');
 
-      const response = await request(app.getHttpServer())
+      const response = await authed
         .post(apiPath('/files/upload'))
         .query({
           locator: '',
@@ -236,7 +271,7 @@ describe('FilesController (e2e)', () => {
     it('creates a folder visible in listing', async () => {
       const folderName = `new-folder-${Date.now()}`;
 
-      const createResponse = await request(app.getHttpServer())
+      const createResponse = await authed
         .post(apiPath('/files/folders'))
         .send({
           parentLocator: '',
@@ -250,9 +285,7 @@ describe('FilesController (e2e)', () => {
         type: 'directory',
       });
 
-      const listResponse = await request(app.getHttpServer()).get(
-        apiPath('/files'),
-      );
+      const listResponse = await authed.get(apiPath('/files'));
       const listBody = listResponse.body as UnifiedResource[];
 
       expect(listResponse.status).toBe(200);
@@ -262,7 +295,7 @@ describe('FilesController (e2e)', () => {
     it('returns 409 when folder already exists', async () => {
       const folderName = `duplicate-folder-${Date.now()}`;
 
-      await request(app.getHttpServer())
+      await authed
         .post(apiPath('/files/folders'))
         .send({
           parentLocator: '',
@@ -270,7 +303,7 @@ describe('FilesController (e2e)', () => {
         })
         .expect(201);
 
-      const response = await request(app.getHttpServer())
+      const response = await authed
         .post(apiPath('/files/folders'))
         .send({
           parentLocator: '',
@@ -285,7 +318,7 @@ describe('FilesController (e2e)', () => {
     it('copies a file to a new path', async () => {
       const destinationLocator = `mockfile-copy-${Date.now()}.txt`;
 
-      const copyResponse = await request(app.getHttpServer())
+      const copyResponse = await authed
         .post(apiPath('/files/copy'))
         .send({
           sourceLocator: 'mockfile_text_01.txt',
@@ -299,7 +332,7 @@ describe('FilesController (e2e)', () => {
         type: 'file',
       });
 
-      const metadataResponse = await request(app.getHttpServer())
+      const metadataResponse = await authed
         .get(apiPath('/files/metadata'))
         .query({ locator: destinationLocator });
 
@@ -312,7 +345,7 @@ describe('FilesController (e2e)', () => {
       const sourceLocator = `move-src-${Date.now()}.txt`;
       const destinationLocator = `move-dest-${Date.now()}.txt`;
 
-      await request(app.getHttpServer())
+      await authed
         .post(apiPath('/files/copy'))
         .send({
           sourceLocator: 'mockfile_text_01.txt',
@@ -320,7 +353,7 @@ describe('FilesController (e2e)', () => {
         })
         .expect(201);
 
-      const moveResponse = await request(app.getHttpServer())
+      const moveResponse = await authed
         .post(apiPath('/files/move'))
         .send({
           sourceLocator,
@@ -334,12 +367,12 @@ describe('FilesController (e2e)', () => {
         type: 'file',
       });
 
-      await request(app.getHttpServer())
+      await authed
         .get(apiPath('/files/metadata'))
         .query({ locator: destinationLocator })
         .expect(200);
 
-      await request(app.getHttpServer())
+      await authed
         .get(apiPath('/files/metadata'))
         .query({ locator: sourceLocator })
         .expect(404);
@@ -348,13 +381,13 @@ describe('FilesController (e2e)', () => {
 
   describe('DELETE /api/files', () => {
     it('deletes a file', async () => {
-      const deleteResponse = await request(app.getHttpServer())
+      const deleteResponse = await authed
         .delete(apiPath('/files'))
         .query({ locator: 'mockfile_text_01.txt' });
 
       expect(deleteResponse.status).toBe(200);
 
-      const metadataResponse = await request(app.getHttpServer())
+      const metadataResponse = await authed
         .get(apiPath('/files/metadata'))
         .query({ locator: 'mockfile_text_01.txt' });
 

@@ -19,6 +19,7 @@ const publicPath = join(__dirname, '..', 'public');
     FilesModule,
     ...(existsSync(publicPath)
       ? [
+          // Static assets are served by Express middleware and bypass APP_GUARD.
           ServeStaticModule.forRoot({
             rootPath: publicPath,
             exclude: ['/api/{*path}'],

@@ -9,6 +9,7 @@ import {
   createTestAuthEnv,
   createTestUsersConfig,
   createTestUsersTempDir,
+  loginForTest,
   TEST_USER,
 } from './helpers/users.fixture';
 
@@ -33,11 +34,7 @@ describe('UsersController (e2e)', () => {
     configureApp(app);
     await app.init();
 
-    const loginResponse = await request(app.getHttpServer())
-      .post(apiPath('/auth/login'))
-      .send({ username: TEST_USER.username, password: TEST_USER.password });
-
-    accessToken = loginResponse.body.accessToken;
+    accessToken = await loginForTest(app);
   });
 
   afterEach(async () => {

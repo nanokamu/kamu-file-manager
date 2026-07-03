@@ -1,7 +1,11 @@
 import { mkdtempSync, writeFileSync } from 'fs';
+import { INestApplication } from '@nestjs/common';
 import { tmpdir } from 'os';
 import { join } from 'path';
+import request from 'supertest';
+import { App } from 'supertest/types';
 import * as bcrypt from 'bcrypt';
+import { apiPath } from './api-path';
 
 const TEST_JWT_SECRET = 'test-jwt-secret';
 
@@ -46,4 +50,15 @@ export function createTestAuthEnv(
     JWT_EXPIRES_IN: '1h',
     USERS_CONFIG_PATH: configPath,
   };
+}
+
+export async function loginForTest(
+  app: INestApplication<App>,
+): Promise<string> {
+  const response = await request(app.getHttpServer())
+    .post(apiPath('/auth/login'))
+    .send({ username: TEST_USER.username, password: TEST_USER.password })
+    .expect(200);
+
+  return response.body.accessToken as string;
 }
