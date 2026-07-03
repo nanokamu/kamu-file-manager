@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { ApiError } from '../../../api/client';
 import type { UnifiedResource } from '../../../api/types';
 import { useBatchOperationProgress } from '../../../shared/hooks/useBatchOperationProgress';
@@ -13,7 +14,9 @@ import {
     moveFile,
     uploadFileWithProgress,
 } from '../api/files.api';
+import { FILE_LIST_AUTO_REFRESH_INTERVAL_MS } from '../config/file-manager.config';
 import type { Crumb, FileItem, FileType } from '../types';
+import { areFileListsEqual } from '../utils/file-list-compare.util';
 import {
     basename,
     joinLocator,
@@ -118,10 +121,27 @@ function apiParentLocator(currentFolderId: string | null): string {
 }
 
 export function useFileActions() {
-    const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
+    const [searchParams, setSearchParams] = useSearchParams();
+    const locatorParam = searchParams.get('locator');
+    const currentFolderId = locatorParam ? normalizeLocator(locatorParam) : null;
+
+    const setFolderLocator = useCallback((id: string | null) => {
+        setSearchParams((prev) => {
+            const next = new URLSearchParams(prev);
+            if (id) {
+                next.set('locator', id);
+            } else {
+                next.delete('locator');
+            }
+            return next;
+        });
+    }, [setSearchParams]);
+
     const [files, setFiles] = useState<FileItem[]>([]);
     const [clipboard, setClipboard] = useState<ClipboardState | null>(null);
     const loadRequestIdRef = useRef(0);
+    const pasteInProgressRef = useRef(false);
+    const lastResourcesRef = useRef<UnifiedResource[]>([]);
 
     const {
         items: operationItems,
@@ -131,7 +151,17 @@ export function useFileActions() {
         runBatch,
     } = useBatchOperationProgress();
 
-    const loadFiles = useCallback(() => {
+    const applyResources = useCallback((resources: UnifiedResource[], folderId: string | null) => {
+        lastResourcesRef.current = resources;
+        setFiles(
+            resources.map((resource) =>
+                mapResourceToFileItem(resource, folderId),
+            ),
+        );
+    }, []);
+
+    const refreshFileList = useCallback((options?: { onlyIfChanged?: boolean }) => {
+        const onlyIfChanged = options?.onlyIfChanged ?? false;
         const requestId = ++loadRequestIdRef.current;
         const folderId = currentFolderId;
 
@@ -141,11 +171,11 @@ export function useFileActions() {
                     return;
                 }
 
-                setFiles(
-                    resources.map((resource) =>
-                        mapResourceToFileItem(resource, folderId),
-                    ),
-                );
+                if (onlyIfChanged && areFileListsEqual(lastResourcesRef.current, resources)) {
+                    return;
+                }
+
+                applyResources(resources, folderId);
             })
             .catch((error) => {
                 if (requestId !== loadRequestIdRef.current) {
@@ -153,9 +183,16 @@ export function useFileActions() {
                 }
 
                 console.error('Failed to load files:', error);
-                setFiles([]);
+                if (!onlyIfChanged) {
+                    lastResourcesRef.current = [];
+                    setFiles([]);
+                }
             });
-    }, [currentFolderId]);
+    }, [currentFolderId, applyResources]);
+
+    const loadFiles = useCallback(() => {
+        refreshFileList();
+    }, [refreshFileList]);
 
     useEffect(() => {
         loadFiles();
@@ -164,6 +201,37 @@ export function useFileActions() {
             loadRequestIdRef.current += 1;
         };
     }, [loadFiles]);
+
+    useEffect(() => {
+        if (FILE_LIST_AUTO_REFRESH_INTERVAL_MS <= 0) {
+            return;
+        }
+
+        const maybeAutoRefresh = () => {
+            if (document.visibilityState !== 'visible' || isOperationModalOpen) {
+                return;
+            }
+            refreshFileList({ onlyIfChanged: true });
+        };
+
+        const intervalId = window.setInterval(
+            maybeAutoRefresh,
+            FILE_LIST_AUTO_REFRESH_INTERVAL_MS,
+        );
+
+        const onVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                maybeAutoRefresh();
+            }
+        };
+
+        document.addEventListener('visibilitychange', onVisibilityChange);
+
+        return () => {
+            window.clearInterval(intervalId);
+            document.removeEventListener('visibilitychange', onVisibilityChange);
+        };
+    }, [refreshFileList, isOperationModalOpen]);
 
     const breadcrumbs = useMemo<Crumb[]>(
         () => breadcrumbsFromPath(currentFolderId),
@@ -180,14 +248,14 @@ export function useFileActions() {
     }, [files]);
 
     const navigateToFolder = useCallback((id: string | null) => {
-        setCurrentFolderId(id);
-    }, []);
+        setFolderLocator(id);
+    }, [setFolderLocator]);
 
     const openFolder = useCallback((item: FileItem) => {
         if (item.type === 'folder') {
-            setCurrentFolderId(item.id);
+            setFolderLocator(item.id);
         }
-    }, []);
+    }, [setFolderLocator]);
 
     const getItemLabel = useCallback((locator: string) => {
         return files.find((file) => file.id === locator)?.name ?? basename(locator);
@@ -307,107 +375,112 @@ export function useFileActions() {
     }, []);
 
     const pasteItems = useCallback(async () => {
-        if (!clipboard || clipboard.sources.length === 0) {
+        if (pasteInProgressRef.current || !clipboard || clipboard.sources.length === 0) {
             return;
         }
 
-        const targetFolder = currentFolderPath(currentFolderId);
-        const targetFolderNormalized = normalizeLocator(targetFolder === '/' ? '' : targetFolder);
-        const existingNames = folderItems.map((item) => item.name);
-        const usedNames = [...existingNames];
+        pasteInProgressRef.current = true;
+        try {
+            const targetFolder = currentFolderPath(currentFolderId);
+            const targetFolderNormalized = normalizeLocator(targetFolder === '/' ? '' : targetFolder);
+            const existingNames = folderItems.map((item) => item.name);
+            const usedNames = [...existingNames];
 
-        const operations: { id: string; label: string; source: string; destination: string; recursive: boolean }[] = [];
+            const operations: { id: string; label: string; source: string; destination: string; recursive: boolean }[] = [];
 
-        for (const sourceItem of clipboard.sources) {
-            const sourceLocator = sourceItem.id;
-            const sourceNormalized = normalizeLocator(sourceLocator);
-            const sourceParent = parentLocator(sourceLocator);
-            const isFolder = sourceItem.type === 'folder';
-            const baseName = sourceItem.name;
+            for (const sourceItem of clipboard.sources) {
+                const sourceLocator = sourceItem.id;
+                const sourceNormalized = normalizeLocator(sourceLocator);
+                const sourceParent = parentLocator(sourceLocator);
+                const isFolder = sourceItem.type === 'folder';
+                const baseName = sourceItem.name;
 
-            if (clipboard.mode === 'move') {
-                if (sourceParent === targetFolder) {
+                if (clipboard.mode === 'move') {
+                    if (sourceParent === targetFolder) {
+                        continue;
+                    }
+
+                    const destination = joinLocator(
+                        targetFolderNormalized || null,
+                        baseName,
+                    );
+
+                    operations.push({
+                        id: sourceLocator,
+                        label: baseName,
+                        source: sourceNormalized,
+                        destination,
+                        recursive: isFolder,
+                    });
                     continue;
                 }
 
-                const destination = joinLocator(
-                    targetFolderNormalized || null,
-                    baseName,
+                const sameParent = sourceParent === targetFolder;
+                const nameCollision = usedNames.some(
+                    (name) => name.toLowerCase() === baseName.toLowerCase(),
                 );
+
+                const destinationName = sameParent || nameCollision
+                    ? resolveUniqueCopyName(baseName, usedNames, isFolder)
+                    : baseName;
+
+                usedNames.push(destinationName);
 
                 operations.push({
                     id: sourceLocator,
-                    label: baseName,
+                    label: destinationName,
                     source: sourceNormalized,
-                    destination,
+                    destination: joinLocator(targetFolderNormalized || null, destinationName),
                     recursive: isFolder,
                 });
-                continue;
             }
 
-            const sameParent = sourceParent === targetFolder;
-            const nameCollision = usedNames.some(
-                (name) => name.toLowerCase() === baseName.toLowerCase(),
+            if (operations.length === 0) {
+                setClipboard(null);
+                return;
+            }
+
+            const operationKind = clipboard.mode;
+            let hadFailure = false;
+
+            await runBatch(
+                operationKind,
+                operations.map((op) => ({ id: op.id, label: op.label })),
+                async (index, update) => {
+                    const op = operations[index];
+
+                    update({ status: 'in_progress', progress: 0 });
+
+                    try {
+                        if (operationKind === 'copy') {
+                            await copyFile({
+                                sourceLocator: op.source,
+                                destinationLocator: op.destination,
+                                recursive: op.recursive,
+                            });
+                        } else {
+                            await moveFile({
+                                sourceLocator: op.source,
+                                destinationLocator: op.destination,
+                                recursive: op.recursive,
+                            });
+                        }
+
+                        update({ status: 'completed', progress: 100 });
+                    } catch (error) {
+                        hadFailure = true;
+                        const message = error instanceof Error ? error.message : `${operationKind} failed`;
+                        update({ status: 'failed', progress: 0, error: message });
+                    }
+                },
             );
 
-            const destinationName = sameParent || nameCollision
-                ? resolveUniqueCopyName(baseName, usedNames, isFolder)
-                : baseName;
-
-            usedNames.push(destinationName);
-
-            operations.push({
-                id: sourceLocator,
-                label: destinationName,
-                source: sourceNormalized,
-                destination: joinLocator(targetFolderNormalized || null, destinationName),
-                recursive: isFolder,
-            });
-        }
-
-        if (operations.length === 0) {
             setClipboard(null);
-            return;
-        }
-
-        const operationKind = clipboard.mode;
-        let hadFailure = false;
-
-        await runBatch(
-            operationKind,
-            operations.map((op) => ({ id: op.id, label: op.label })),
-            async (index, update) => {
-                const op = operations[index];
-
-                update({ status: 'in_progress', progress: 0 });
-
-                try {
-                    if (operationKind === 'copy') {
-                        await copyFile({
-                            sourceLocator: op.source,
-                            destinationLocator: op.destination,
-                            recursive: op.recursive,
-                        });
-                    } else {
-                        await moveFile({
-                            sourceLocator: op.source,
-                            destinationLocator: op.destination,
-                            recursive: op.recursive,
-                        });
-                    }
-
-                    update({ status: 'completed', progress: 100 });
-                } catch (error) {
-                    hadFailure = true;
-                    const message = error instanceof Error ? error.message : `${operationKind} failed`;
-                    update({ status: 'failed', progress: 0, error: message });
-                }
-            },
-        );
-
-        setClipboard(null);
-        if (!hadFailure) {
-            loadFiles();
+            if (!hadFailure) {
+                loadFiles();
+            }
+        } finally {
+            pasteInProgressRef.current = false;
         }
     }, [clipboard, currentFolderId, folderItems, runBatch, loadFiles]);
 
@@ -517,6 +590,7 @@ export function useFileActions() {
     }, []);
 
     return {
+        currentFolderId,
         breadcrumbs,
         folderItems,
         searchItems,
@@ -538,5 +612,6 @@ export function useFileActions() {
         openInEditor,
         downloadItem,
         downloadFolderAsZipItem,
+        refreshFileList,
     };
 }

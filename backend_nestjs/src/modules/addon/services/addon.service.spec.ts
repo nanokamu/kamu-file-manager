@@ -1,0 +1,197 @@
+import { BadRequestException } from '@nestjs/common';
+import { Test, TestingModule } from '@nestjs/testing';
+import { Readable } from 'node:stream';
+import { ADDON_MAX_ENVELOPE_BYTES } from '../config/addon.constants';
+import { ReturnStatus } from '../config/addon.types';
+import { FilesService } from '../../files/services/files.service';
+import { AddonService } from './addon.service';
+import {
+  buildEnvelopeHeader,
+  createEnvelopeStream,
+  getEnvelopeContentLength,
+  parseEnvelope,
+} from '../utils/addon-envelope.util';
+
+describe('AddonService', () => {
+  let addonService: AddonService;
+  let filesService: {
+    downloadZipFromLocators: jest.Mock;
+    compressLocatorsToZipFile: jest.Mock;
+  };
+
+  beforeEach(async () => {
+    filesService = {
+      downloadZipFromLocators: jest.fn(),
+      compressLocatorsToZipFile: jest.fn(),
+    };
+
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        AddonService,
+        { provide: FilesService, useValue: filesService },
+      ],
+    }).compile();
+
+    addonService = module.get(AddonService);
+  });
+
+  async function readStream(stream: Readable): Promise<Buffer> {
+    const chunks: Buffer[] = [];
+    for await (const chunk of stream) {
+      chunks.push(
+        Buffer.isBuffer(chunk)
+          ? chunk
+          : Buffer.from(chunk as string | Uint8Array),
+      );
+    }
+    return Buffer.concat(chunks);
+  }
+
+  describe('addonDownloadAsZip', () => {
+    it('returns envelope with correct content length', async () => {
+      const fileBytes = Buffer.from('PK\x03\x04zip');
+      filesService.downloadZipFromLocators.mockResolvedValue({
+        stream: Readable.from([fileBytes]),
+        archiveName: 'archive.zip',
+        checksum: null,
+        size: fileBytes.length,
+      });
+
+      const { stream, contentLength } = await addonService.addonDownloadAsZip({
+        locators: ['a.txt'],
+        archiveName: 'archive.zip',
+        archiveType: 'zip',
+        currentFolderLocator: 'projects',
+      });
+
+      const envelope = await readStream(stream);
+      const metaLen =
+        buildEnvelopeHeader({
+          status: ReturnStatus.Ok,
+          filename: 'archive.zip',
+          mimeType: 'application/octet-stream',
+          message: 'addonDownloadAsZip completed',
+        }).length - 4;
+
+      expect(contentLength).toBe(
+        getEnvelopeContentLength(metaLen, fileBytes.length),
+      );
+      expect(envelope.length).toBe(contentLength);
+
+      const parsed = parseEnvelope(envelope);
+      expect(parsed.meta.status).toBe(ReturnStatus.Ok);
+      expect(parsed.meta.filename).toBe('archive.zip');
+      expect(parsed.fileBytes).toEqual(fileBytes);
+    });
+
+    it('rejects non-zip archive types', async () => {
+      await expect(
+        addonService.addonDownloadAsZip({
+          locators: ['a.txt'],
+          archiveName: 'bundle.tar',
+          archiveType: 'tar',
+          currentFolderLocator: '',
+        }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('rejects archives exceeding addon size limit', async () => {
+      filesService.downloadZipFromLocators.mockResolvedValue({
+        stream: Readable.from([Buffer.alloc(0)]),
+        archiveName: 'huge.zip',
+        checksum: null,
+        size: ADDON_MAX_ENVELOPE_BYTES + 1,
+      });
+
+      await expect(
+        addonService.addonDownloadAsZip({
+          locators: ['big.bin'],
+          archiveName: 'huge.zip',
+          archiveType: 'zip',
+          currentFolderLocator: '',
+        }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('passes folder locators to downloadZipFromLocators', async () => {
+      const fileBytes = Buffer.from('PK\x03\x04zip');
+      filesService.downloadZipFromLocators.mockResolvedValue({
+        stream: Readable.from([fileBytes]),
+        archiveName: 'archive.zip',
+        checksum: null,
+        size: fileBytes.length,
+      });
+
+      await addonService.addonDownloadAsZip({
+        locators: ['nestitems'],
+        archiveName: 'archive.zip',
+        archiveType: 'zip',
+        currentFolderLocator: '',
+      });
+
+      expect(filesService.downloadZipFromLocators).toHaveBeenCalledWith(
+        ['nestitems'],
+        'archive.zip',
+      );
+    });
+
+    it('passes mixed file and folder locators to downloadZipFromLocators', async () => {
+      const fileBytes = Buffer.from('PK\x03\x04zip');
+      filesService.downloadZipFromLocators.mockResolvedValue({
+        stream: Readable.from([fileBytes]),
+        archiveName: 'archive.zip',
+        checksum: null,
+        size: fileBytes.length,
+      });
+
+      await addonService.addonDownloadAsZip({
+        locators: ['a.txt', 'nestitems'],
+        archiveName: 'archive.zip',
+        archiveType: 'zip',
+        currentFolderLocator: '',
+      });
+
+      expect(filesService.downloadZipFromLocators).toHaveBeenCalledWith(
+        ['a.txt', 'nestitems'],
+        'archive.zip',
+      );
+    });
+  });
+
+  describe('addonCompressAsZip', () => {
+    it('saves zip locally and returns a JSON message', async () => {
+      filesService.compressLocatorsToZipFile.mockResolvedValue({
+        savedLocator: 'compressed.zip',
+        savedName: 'compressed.zip',
+      });
+
+      const result = await addonService.addonCompressAsZip({
+        locators: ['a.txt'],
+        archiveName: 'compressed.zip',
+        currentFolderLocator: '',
+      });
+
+      expect(filesService.compressLocatorsToZipFile).toHaveBeenCalledWith(
+        '',
+        ['a.txt'],
+        'compressed.zip',
+      );
+      expect(result).toEqual({
+        status: ReturnStatus.Ok,
+        message: 'Created compressed.zip in root',
+      });
+    });
+
+    it('rejects locators from different directories', async () => {
+      await expect(
+        addonService.addonCompressAsZip({
+          locators: ['a.txt', 'folder/b.txt'],
+          archiveName: 'compressed.zip',
+          currentFolderLocator: '',
+        }),
+      ).rejects.toThrow(BadRequestException);
+
+      expect(filesService.compressLocatorsToZipFile).not.toHaveBeenCalled();
+    });
+  });
+});

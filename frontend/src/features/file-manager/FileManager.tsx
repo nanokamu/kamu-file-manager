@@ -1,19 +1,41 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ConfirmModal } from '../../shared/components/ConfirmModal';
 import { MessageBoxModal } from '../../shared/components/MessageBoxModal';
 import { OperationProgressModal } from '../../shared/components/OperationProgressModal';
+import { AddonDownloadModal } from '../addon/components/AddonDownloadModal';
+import { AddonMenuModal } from '../addon/components/AddonMenuModal';
+import { AddonParamsModal } from '../addon/components/AddonParamsModal';
+import { useAddonConfig } from '../addon/hooks/useAddonConfig';
+import { useAddonFlow } from '../addon/hooks/useAddonFlow';
 import type { FileItem } from './types';
 import { ActionBar } from './components/ActionBar';
 import { Breadcrumbs } from './components/Breadcrumbs';
+import { NavigatorBar } from './components/NavigatorBar';
 import { TextInputDialog } from '../../shared/components/TextInputDialog';
 import { FileTableArea } from './components/FileTableArea';
+import {
+    NAVIGATOR_BAR_DEFAULT_OPEN,
+    NAVIGATOR_BAR_ENABLED,
+} from './config/file-manager.config';
 import { useFileActions } from './hooks/useFileActions';
+import { getRangeIds } from './utils/file-selection.util';
 
-function getRangeIds(items: FileItem[], startId: string, endId: string): string[] {
-    const start = items.findIndex((i) => i.id === startId);
-    const end = items.findIndex((i) => i.id === endId);
-    if (start === -1 || end === -1) return [];
-    const [lo, hi] = [start, end].sort((a, b) => a - b);
-    return items.slice(lo, hi + 1).map((i) => i.id);
+const NAV_OPEN_STORAGE_KEY = 'fileManager.navOpen';
+
+function readNavOpenPreference(): boolean {
+    if (!NAVIGATOR_BAR_ENABLED) {
+        return false;
+    }
+
+    try {
+        const stored = localStorage.getItem(NAV_OPEN_STORAGE_KEY);
+        if (stored === null) {
+            return NAVIGATOR_BAR_DEFAULT_OPEN;
+        }
+        return stored === 'true';
+    } catch {
+        return NAVIGATOR_BAR_DEFAULT_OPEN;
+    }
 }
 
 export default function FileManager() {
@@ -39,6 +61,8 @@ export default function FileManager() {
         openInEditor,
         downloadItem,
         downloadFolderAsZipItem,
+        refreshFileList,
+        currentFolderId,
     } = useFileActions();
 
     const [searchQuery, setSearchQuery] = useState('');
@@ -50,11 +74,30 @@ export default function FileManager() {
         description: string;
     } | null>(null);
     const [renameTarget, setRenameTarget] = useState<FileItem | null>(null);
+    const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+    const [isNavOpen, setIsNavOpen] = useState(readNavOpenPreference);
     const anchorIdRef = useRef<string | null>(null);
 
     useEffect(() => {
         document.title = 'Files';
     }, []);
+
+    useEffect(() => {
+        if (!NAVIGATOR_BAR_ENABLED) {
+            return;
+        }
+
+        try {
+            localStorage.setItem(NAV_OPEN_STORAGE_KEY, String(isNavOpen));
+        } catch {
+            // ignore storage errors
+        }
+    }, [isNavOpen]);
+
+    const selectedFileIds = useMemo(() => {
+        const validIds = new Set(folderItems.map((item) => item.id));
+        return selectedFiles.filter((id) => validIds.has(id));
+    }, [folderItems, selectedFiles]);
 
     const filteredItems = useMemo(() => {
         if (searchQuery) {
@@ -63,9 +106,39 @@ export default function FileManager() {
         return folderItems;
     }, [searchQuery, folderItems, searchItems]);
 
+    const { config: addonConfig } = useAddonConfig();
+
+    const selectedItems = useMemo(
+        () => filteredItems.filter((item) => selectedFileIds.includes(item.id)),
+        [filteredItems, selectedFileIds],
+    );
+
+    const {
+        step: addonStep,
+        applicableTemplates,
+        selectedTemplate,
+        paramValues,
+        downloadProgress,
+        isSubmitting: isAddonSubmitting,
+        resultMessage: addonResultMessage,
+        openMenu: openAddonMenu,
+        closeFlow: closeAddonFlow,
+        selectTemplate: selectAddonTemplate,
+        goBackToMenu: goBackToAddonMenu,
+        updateParamValue: updateAddonParamValue,
+        confirmParams: confirmAddonParams,
+        closeResult: closeAddonResult,
+    } = useAddonFlow({
+        config: addonConfig,
+        selectedLocators: selectedFileIds,
+        selectedItems,
+        currentFolderId,
+        onFileListRefresh: refreshFileList,
+    });
+
     useEffect(() => {
         anchorIdRef.current = null;
-    }, [filteredItems]);
+    }, [folderItems]);
 
     const clearSelection = useCallback(() => {
         anchorIdRef.current = null;
@@ -139,25 +212,80 @@ export default function FileManager() {
         anchorIdRef.current = id;
     };
 
+    const handleKeyboardNavigate = useCallback(
+        (id: string, modifiers: { shiftKey: boolean }) => {
+            if (modifiers.shiftKey && anchorIdRef.current) {
+                const rangeIds = getRangeIds(filteredItems, anchorIdRef.current, id);
+                if (rangeIds.length > 0) {
+                    setSelectedFiles(rangeIds);
+                    return;
+                }
+            }
+
+            setSelectedFiles([id]);
+            anchorIdRef.current = id;
+        },
+        [filteredItems],
+    );
+
+    const handleKeyboardToggleSelect = useCallback((id: string) => {
+        setSelectedFiles((prev) =>
+            prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
+        );
+        anchorIdRef.current = id;
+    }, []);
+
+    const handleSelectAll = useCallback(() => {
+        if (filteredItems.length === 0) {
+            return;
+        }
+        setSelectedFiles(filteredItems.map((item) => item.id));
+        anchorIdRef.current = filteredItems[filteredItems.length - 1].id;
+    }, [filteredItems]);
+
+    const handleRequestDelete = useCallback(() => {
+        if (selectedFileIds.length > 0) {
+            setIsDeleteConfirmOpen(true);
+        }
+    }, [selectedFileIds.length]);
+
+    const isKeyboardDisabled =
+        isCreateFolderOpen ||
+        renameTarget !== null ||
+        messageBox !== null ||
+        addonStep !== 'idle' ||
+        addonResultMessage !== null ||
+        isOperationModalOpen ||
+        openMenuId !== null ||
+        isDeleteConfirmOpen;
+
+    const deleteTitle = `Delete ${selectedFileIds.length} item${selectedFileIds.length === 1 ? '' : 's'}?`;
+    const deleteDescription = `This action cannot be undone. The selected item${selectedFileIds.length === 1 ? '' : 's'} will be permanently deleted.`;
+
     const handleBreadcrumbClick = (id: string | null) => {
         navigateToFolder(id);
         setSelectedFiles([]);
     };
 
     const handleCopy = () => {
-        copyItems(selectedFiles);
+        copyItems(selectedFileIds);
         setSelectedFiles([]);
     };
 
     const handleMove = () => {
-        moveItems(selectedFiles);
+        moveItems(selectedFileIds);
         setSelectedFiles([]);
     };
 
     const handleDelete = async () => {
-        const ids = [...selectedFiles];
+        const ids = [...selectedFileIds];
         setSelectedFiles([]);
         await deleteItems(ids);
+    };
+
+    const handleDeleteConfirm = () => {
+        setIsDeleteConfirmOpen(false);
+        void handleDelete();
     };
 
     const handleCreateFolderSubmit = async (folderName: string): Promise<boolean> => {
@@ -172,22 +300,34 @@ export default function FileManager() {
     };
 
     return (
-        <div className="flex flex-1 min-h-0 flex-col bg-slate-50 p-6 font-sans">
-            <div className="flex flex-1 min-h-0 flex-col overflow-hidden bg-white rounded-2xl shadow-sm border border-slate-200/80">
+        <div
+            className={`flex flex-1 min-h-0 gap-0 bg-slate-50 p-6 font-sans ${
+                NAVIGATOR_BAR_ENABLED ? '' : 'flex-col'
+            }`}
+        >
+            {NAVIGATOR_BAR_ENABLED && (
+                <NavigatorBar
+                    isOpen={isNavOpen}
+                    onToggle={() => setIsNavOpen((open) => !open)}
+                />
+            )}
+            <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
 
                 <ActionBar
                     searchQuery={searchQuery}
                     setSearchQuery={setSearchQuery}
-                    selectedCount={selectedFiles.length}
+                    selectedCount={selectedFileIds.length}
                     clipboardCount={clipboard?.sources.length ?? 0}
                     onClearSelection={clearSelection}
                     onClearClipboard={clearClipboard}
                     onCopy={handleCopy}
                     onMove={handleMove}
                     onPaste={() => void pasteItems()}
-                    onDelete={() => void handleDelete()}
+                    onRequestDelete={handleRequestDelete}
                     onNewFolder={() => setIsCreateFolderOpen(true)}
                     onUpload={uploadFiles}
+                    showAddon={applicableTemplates.length > 0}
+                    onAddon={openAddonMenu}
                 />
 
                 <Breadcrumbs
@@ -197,8 +337,10 @@ export default function FileManager() {
 
                 <FileTableArea
                     items={filteredItems}
-                    selectedFiles={selectedFiles}
+                    selectedFiles={selectedFileIds}
                     openMenuId={openMenuId}
+                    anchorIdRef={anchorIdRef}
+                    keyboardDisabled={isKeyboardDisabled}
                     onRowClick={handleRowClick}
                     onToggleSelect={handleSelectFile}
                     onRangeSelect={applyRangeSelection}
@@ -207,16 +349,26 @@ export default function FileManager() {
                         anchorIdRef.current = anchorId;
                     }}
                     onEmptyAreaClick={() => {
-                        if (selectedFiles.length > 0) {
+                        if (selectedFileIds.length > 0) {
                             clearSelection();
                         }
                     }}
+                    onKeyboardNavigate={handleKeyboardNavigate}
+                    onKeyboardToggleSelect={handleKeyboardToggleSelect}
+                    onKeyboardSelectAll={handleSelectAll}
+                    onKeyboardClearSelection={clearSelection}
+                    onKeyboardCopy={handleCopy}
+                    onKeyboardMove={handleMove}
+                    onKeyboardPaste={() => void pasteItems()}
+                    onKeyboardRequestDelete={handleRequestDelete}
+                    onKeyboardRename={setRenameTarget}
                     onToggleMenu={(id) => setOpenMenuId((prev) => (prev === id ? null : id))}
                     onCloseMenu={() => setOpenMenuId(null)}
                     onOpenInEditor={openInEditor}
                     onDownload={downloadItem}
                     onDownloadFolderAsZip={downloadFolderAsZipItem}
                     onRename={setRenameTarget}
+                    onUploadFiles={(files) => void uploadFiles(files)}
                 />
 
             </div>
@@ -246,7 +398,7 @@ export default function FileManager() {
                         setRenameTarget(null);
                         const success = await renameItem(target, name);
                         if (success) {
-                            if (selectedFiles.includes(target.id)) {
+                            if (selectedFileIds.includes(target.id)) {
                                 setSelectedFiles([]);
                             }
                             if (clipboard?.sources.some((item) => item.id === target.id)) {
@@ -274,6 +426,39 @@ export default function FileManager() {
                 />
             )}
 
+            <AddonMenuModal
+                isOpen={addonStep === 'menu'}
+                templates={applicableTemplates}
+                onSelect={selectAddonTemplate}
+                onClose={closeAddonFlow}
+            />
+
+            <AddonParamsModal
+                isOpen={addonStep === 'params'}
+                template={selectedTemplate}
+                values={paramValues}
+                isSubmitting={isAddonSubmitting}
+                onValueChange={updateAddonParamValue}
+                onConfirm={() => void confirmAddonParams()}
+                onBack={goBackToAddonMenu}
+                onClose={closeAddonFlow}
+            />
+
+            <AddonDownloadModal
+                isOpen={addonStep === 'downloading'}
+                progress={downloadProgress}
+            />
+
+            {addonResultMessage && (
+                <MessageBoxModal
+                    isOpen
+                    onClose={closeAddonResult}
+                    title={addonResultMessage.title}
+                    description={addonResultMessage.description}
+                    variant={addonResultMessage.variant}
+                />
+            )}
+
             {isOperationModalOpen && (
                 <OperationProgressModal
                     isOpen={isOperationModalOpen}
@@ -283,6 +468,17 @@ export default function FileManager() {
                     autoCloseOnComplete={operation === 'rename'}
                 />
             )}
+
+            <ConfirmModal
+                isOpen={isDeleteConfirmOpen}
+                onClose={() => setIsDeleteConfirmOpen(false)}
+                onConfirm={handleDeleteConfirm}
+                title={deleteTitle}
+                description={deleteDescription}
+                confirmLabel="Delete"
+                variant="danger"
+                initialFocus="cancel"
+            />
         </div>
     );
 }

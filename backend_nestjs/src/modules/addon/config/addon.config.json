@@ -1,0 +1,109 @@
+[
+    {
+        "menuName": "Compress as ZIP",
+        "apiType": "POST",
+        "apiUrl": "/api/addonCompressAsZip",
+        "hasReturnMessage": true,
+        "hasReturnFile": false,
+        "returnMode": "direct",
+        "hasFileListRefresh": true,
+        "fileListRefreshDelayMs": 2000,
+        "allowBlankAutoParams": false,
+        "autoParams": [
+            {
+                "name": "locators",
+                "type": "string[]"
+            },
+            {
+                "name": "currentFolderLocator",
+                "type": "string"
+            }
+        ],
+        "customParams": [
+            {
+                "name": "archiveName",
+                "label": "Archive Name",
+                "type": "string",
+                "inputType": "text",
+                "defaultValue": "archive.zip"
+            }
+        ],
+        "filterRule": {
+            "enabledFile": true,
+            "filePattern": ".*",
+            "enabledFolder": true,
+            "folderPattern": ".*",
+            "folderIdPattern": ".*"
+        }
+    },
+    {
+        "menuName": "Download as ZIP",
+        "apiType": "POST",
+        "apiUrl": "/api/addonDownloadAsZip",
+        "hasReturnMessage": true,
+        "hasReturnFile": true,
+        "returnMode": "envelope",
+        "hasFileListRefresh": false,
+        "fileListRefreshDelayMs": 0,
+        "allowBlankAutoParams": false,
+        "autoParams": [
+            {
+                "name": "locators",
+                "type": "string[]"
+            },
+            {
+                "name": "currentFolderLocator",
+                "type": "string"
+            }
+        ],
+        "customParams": [
+            {
+                "name": "archiveName",
+                "label": "Archive Name",
+                "type": "string",
+                "inputType": "text",
+                "defaultValue": "archive.zip"
+            },
+            {
+                "name": "archiveType",
+                "label": "Archive Type",
+                "type": "string",
+                "inputType": "dropdown",
+                "options": [
+                    {
+                        "value": "zip",
+                        "label": "ZIP"
+                    },
+                    {
+                        "value": "tar",
+                        "label": "TAR"
+                    },
+                    {
+                        "value": "tar.gz",
+                        "label": "TAR.GZ"
+                    },
+                    {
+                        "value": "tar.bz2",
+                        "label": "TAR.BZ2"
+                    },
+                    {
+                        "value": "tar.xz",
+                        "label": "TAR.XZ"
+                    },
+                    {
+                        "value": "tar.zst",
+                        "label": "TAR.ZST"
+                    }
+                ],
+                "defaultValue": "zip"
+            }
+        ],
+        "filterRule": {
+            "enabledFile": true,
+            "filePattern": ".*",
+            "enabledFolder": true,
+            "folderPattern": ".*",
+            "folderIdPattern": ".*"
+        }
+    }
+]
