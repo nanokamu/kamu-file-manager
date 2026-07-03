@@ -19,6 +19,8 @@ describe('AddonService', () => {
     compressLocatorsToZipFile: jest.Mock;
   };
 
+  const testUserId = 'test_user';
+
   beforeEach(async () => {
     filesService = {
       downloadZipFromLocators: jest.fn(),
@@ -62,7 +64,7 @@ describe('AddonService', () => {
         archiveName: 'archive.zip',
         archiveType: 'zip',
         currentFolderLocator: 'projects',
-      });
+      }, testUserId);
 
       const envelope = await readStream(stream);
       const metaLen =
@@ -91,7 +93,7 @@ describe('AddonService', () => {
           archiveName: 'bundle.tar',
           archiveType: 'tar',
           currentFolderLocator: '',
-        }),
+        }, testUserId),
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -109,7 +111,7 @@ describe('AddonService', () => {
           archiveName: 'huge.zip',
           archiveType: 'zip',
           currentFolderLocator: '',
-        }),
+        }, testUserId),
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -127,11 +129,12 @@ describe('AddonService', () => {
         archiveName: 'archive.zip',
         archiveType: 'zip',
         currentFolderLocator: '',
-      });
+      }, testUserId);
 
       expect(filesService.downloadZipFromLocators).toHaveBeenCalledWith(
         ['nestitems'],
         'archive.zip',
+        testUserId,
       );
     });
 
@@ -149,11 +152,12 @@ describe('AddonService', () => {
         archiveName: 'archive.zip',
         archiveType: 'zip',
         currentFolderLocator: '',
-      });
+      }, testUserId);
 
       expect(filesService.downloadZipFromLocators).toHaveBeenCalledWith(
         ['a.txt', 'nestitems'],
         'archive.zip',
+        testUserId,
       );
     });
   });
@@ -169,12 +173,13 @@ describe('AddonService', () => {
         locators: ['a.txt'],
         archiveName: 'compressed.zip',
         currentFolderLocator: '',
-      });
+      }, testUserId);
 
       expect(filesService.compressLocatorsToZipFile).toHaveBeenCalledWith(
         '',
         ['a.txt'],
         'compressed.zip',
+        testUserId,
       );
       expect(result).toEqual({
         status: ReturnStatus.Ok,
@@ -188,7 +193,7 @@ describe('AddonService', () => {
           locators: ['a.txt', 'folder/b.txt'],
           archiveName: 'compressed.zip',
           currentFolderLocator: '',
-        }),
+        }, testUserId),
       ).rejects.toThrow(BadRequestException);
 
       expect(filesService.compressLocatorsToZipFile).not.toHaveBeenCalled();

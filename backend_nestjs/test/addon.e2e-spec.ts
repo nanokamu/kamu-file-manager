@@ -24,6 +24,7 @@ import {
   createTestUsersConfig,
   createTestUsersTempDir,
   loginForTest,
+  TEST_USER,
 } from './helpers/users.fixture';
 
 function isZipBuffer(buffer: Buffer): boolean {
@@ -88,7 +89,7 @@ describe('AddonController (e2e)', () => {
     accessToken = await loginForTest(app);
 
     const storagePathService = moduleFixture.get(StoragePathService);
-    rootDataDir = storagePathService.resolveStoragePath();
+    rootDataDir = storagePathService.resolveStoragePath(undefined, TEST_USER.id);
 
     if (existsSync(rootDataDir)) {
       clearDefaultStorageFixture(rootDataDir);

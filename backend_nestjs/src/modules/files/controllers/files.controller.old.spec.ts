@@ -20,6 +20,9 @@ import {
   seedDefaultStorageFixture,
   storageTestProviders,
 } from '../../../../test/helpers/storage.fixture';
+import type { AuthenticatedUser } from '../../users/interfaces/user.interface';
+
+const testUser: AuthenticatedUser = { id: 'default', username: 'test' };
 
 async function readStreamableFile(file: StreamableFile): Promise<Buffer> {
   const stream = file.getStream();
@@ -82,7 +85,7 @@ describe('FilesController', () => {
 
   describe('listFiles', () => {
     it('should return all files with full paths from storage', async () => {
-      const result = await filesController.listFiles();
+      const result = await filesController.listFiles(testUser);
       expect(result.files).toEqual([
         'nestitems/textnest1.txt',
         'nestitems/textnest2.txt',
@@ -95,7 +98,7 @@ describe('FilesController', () => {
 
   describe('list', () => {
     it('should return root-level entries', async () => {
-      const result = await filesController.list({});
+      const result = await filesController.list({}, testUser);
       expect(result.map((entry) => entry.path).sort()).toEqual([
         'nestitems',
         'text1.txt',
@@ -105,7 +108,7 @@ describe('FilesController', () => {
     });
 
     it('should return entries inside a folder', async () => {
-      const result = await filesController.list({ locator: 'nestitems' });
+      const result = await filesController.list({ locator: 'nestitems' }, testUser);
       expect(result.map((entry) => entry.path).sort()).toEqual([
         'nestitems/textnest1.txt',
         'nestitems/textnest2.txt',
@@ -116,7 +119,7 @@ describe('FilesController', () => {
 
   describe('getMetadata', () => {
     it('should return metadata for a file', async () => {
-      const result = await filesController.getMetadata('text1.txt');
+      const result = await filesController.getMetadata('text1.txt', testUser);
       expect(result).toMatchObject({
         path: 'text1.txt',
         name: 'text1.txt',
@@ -132,7 +135,7 @@ describe('FilesController', () => {
     it('should include sha256 checksum metadata', async () => {
       const setHeader = jest.fn();
       const mockRes = { set: setHeader } as unknown as Response;
-      const file = await filesController.download('text1.txt', mockRes);
+      const file = await filesController.download('text1.txt', mockRes, testUser);
 
       expect(file).toBeInstanceOf(StreamableFile);
       await readStreamableFile(file);
@@ -158,6 +161,7 @@ describe('FilesController', () => {
           archiveName: 'download.zip',
         },
         mockRes,
+        testUser,
       );
 
       expect(file).toBeInstanceOf(StreamableFile);
@@ -169,7 +173,7 @@ describe('FilesController', () => {
     it('should default archiveName to archive.zip', async () => {
       const result = await filesService.downloadZip({
         locators: ['text1.txt'],
-      });
+      }, 'default');
 
       expect(result.archiveName).toBe('archive.zip');
     });
@@ -181,6 +185,7 @@ describe('FilesController', () => {
           zipPaths: ['custom/text1.txt', 'nested/textnest1.txt'],
         },
         mockRes,
+        testUser,
       );
 
       const buffer = await readStreamableFile(file);
@@ -196,6 +201,7 @@ describe('FilesController', () => {
           folderLocators: ['nestitems'],
         },
         mockRes,
+        testUser,
       );
 
       expect(file).toBeInstanceOf(StreamableFile);
@@ -215,6 +221,7 @@ describe('FilesController', () => {
           folderZipPaths: ['export/nestitems'],
         },
         mockRes,
+        testUser,
       );
 
       const buffer = await readStreamableFile(file);
@@ -231,6 +238,7 @@ describe('FilesController', () => {
           folderLocators: ['nestitems'],
         },
         mockRes,
+        testUser,
       );
 
       const buffer = await readStreamableFile(file);
@@ -249,6 +257,7 @@ describe('FilesController', () => {
             folderZipPaths: ['only-one-prefix'],
           },
           mockRes,
+          testUser,
         ),
       ).rejects.toThrow(BadRequestException);
     });
@@ -260,6 +269,7 @@ describe('FilesController', () => {
             folderLocators: ['text1.txt'],
           },
           mockRes,
+          testUser,
         ),
       ).rejects.toThrow(new BadRequestException('Not a directory'));
     });
@@ -272,6 +282,7 @@ describe('FilesController', () => {
             zipPaths: ['only-one.txt'],
           },
           mockRes,
+          testUser,
         ),
       ).rejects.toThrow(BadRequestException);
     });
@@ -283,6 +294,7 @@ describe('FilesController', () => {
             locators: ['nestitems'],
           },
           mockRes,
+          testUser,
         ),
       ).rejects.toThrow(new BadRequestException('Not a file'));
     });
@@ -294,6 +306,7 @@ describe('FilesController', () => {
             locators: ['does-not-exist.txt'],
           },
           mockRes,
+          testUser,
         ),
       ).rejects.toThrow(NotFoundException);
     });
@@ -305,7 +318,7 @@ describe('FilesController', () => {
       const result = await filesController.copy({
         sourceLocator: 'text1.txt',
         destinationLocator,
-      });
+      }, testUser);
 
       expect(result).toMatchObject({
         path: destinationLocator,
@@ -314,7 +327,7 @@ describe('FilesController', () => {
       });
       expect(result.size).toBeGreaterThan(0);
 
-      const rootEntries = await filesController.list({});
+      const rootEntries = await filesController.list({}, testUser);
       expect(rootEntries.map((entry) => entry.path)).toContain(
         destinationLocator,
       );
@@ -326,7 +339,7 @@ describe('FilesController', () => {
         sourceLocator: 'nestitems',
         destinationLocator,
         recursive: true,
-      });
+      }, testUser);
 
       expect(result).toMatchObject({
         path: destinationLocator,
@@ -336,7 +349,7 @@ describe('FilesController', () => {
 
       const copiedEntries = await filesController.list({
         locator: destinationLocator,
-      });
+      }, testUser);
       expect(copiedEntries.map((entry) => entry.path).sort()).toEqual(
         expect.arrayContaining([
           `${destinationLocator}/textnest1.txt`,
@@ -352,7 +365,7 @@ describe('FilesController', () => {
         filesController.copy({
           sourceLocator: 'nestitems',
           destinationLocator: `nestitems-copy-no-recursive-${Date.now()}`,
-        }),
+        }, testUser),
       ).rejects.toThrow(
         new BadRequestException('Recursive copy is required for folders'),
       );
@@ -363,7 +376,7 @@ describe('FilesController', () => {
         filesController.copy({
           sourceLocator: 'text1.txt',
           destinationLocator: 'text2.txt',
-        }),
+        }, testUser),
       ).rejects.toThrow(new ConflictException('File already exists'));
     });
   });
@@ -374,13 +387,13 @@ describe('FilesController', () => {
       await filesController.copy({
         sourceLocator: 'text1.txt',
         destinationLocator: sourceLocator,
-      });
+      }, testUser);
 
       const destinationLocator = `move-dest-${Date.now()}.txt`;
       const result = await filesController.move({
         sourceLocator,
         destinationLocator,
-      });
+      }, testUser);
 
       expect(result).toMatchObject({
         path: destinationLocator,
@@ -389,7 +402,7 @@ describe('FilesController', () => {
       });
       expect(result.size).toBeGreaterThan(0);
 
-      const rootEntries = await filesController.list({});
+      const rootEntries = await filesController.list({}, testUser);
       expect(rootEntries.map((entry) => entry.path)).toContain(
         destinationLocator,
       );
@@ -404,14 +417,14 @@ describe('FilesController', () => {
         sourceLocator: 'nestitems',
         destinationLocator: sourceLocator,
         recursive: true,
-      });
+      }, testUser);
 
       const destinationLocator = `nestitems-move-dest-${Date.now()}`;
       const result = await filesController.move({
         sourceLocator,
         destinationLocator,
         recursive: true,
-      });
+      }, testUser);
 
       expect(result).toMatchObject({
         path: destinationLocator,
@@ -421,7 +434,7 @@ describe('FilesController', () => {
 
       const movedEntries = await filesController.list({
         locator: destinationLocator,
-      });
+      }, testUser);
       expect(movedEntries.map((entry) => entry.path).sort()).toEqual(
         expect.arrayContaining([
           `${destinationLocator}/textnest1.txt`,
@@ -431,7 +444,7 @@ describe('FilesController', () => {
       );
       expect(movedEntries).toHaveLength(3);
 
-      const rootEntries = await filesController.list({});
+      const rootEntries = await filesController.list({}, testUser);
       expect(rootEntries.map((entry) => entry.path)).not.toContain(
         sourceLocator,
       );
@@ -443,13 +456,13 @@ describe('FilesController', () => {
         sourceLocator: 'nestitems',
         destinationLocator: sourceLocator,
         recursive: true,
-      });
+      }, testUser);
 
       await expect(
         filesController.move({
           sourceLocator,
           destinationLocator: `nestitems-move-no-recursive-dest-${Date.now()}`,
-        }),
+        }, testUser),
       ).rejects.toThrow(
         new BadRequestException('Recursive move is required for folders'),
       );
@@ -460,13 +473,13 @@ describe('FilesController', () => {
       await filesController.copy({
         sourceLocator: 'text1.txt',
         destinationLocator: sourceLocator,
-      });
+      }, testUser);
 
       await expect(
         filesController.move({
           sourceLocator,
           destinationLocator: 'text2.txt',
-        }),
+        }, testUser),
       ).rejects.toThrow(new ConflictException('File already exists'));
     });
   });
@@ -478,7 +491,7 @@ describe('FilesController', () => {
       const result = await filesController.createFolder({
         parentLocator: '',
         folderName,
-      });
+      }, testUser);
 
       expect(result).toMatchObject({
         path: folderName,
@@ -486,7 +499,7 @@ describe('FilesController', () => {
         type: 'directory',
       });
 
-      const rootEntries = await filesController.list({});
+      const rootEntries = await filesController.list({}, testUser);
       expect(rootEntries.map((entry) => entry.path)).toContain(folderName);
     });
 
@@ -496,13 +509,13 @@ describe('FilesController', () => {
       await filesController.createFolder({
         parentLocator: '',
         folderName,
-      });
+      }, testUser);
 
       await expect(
         filesController.createFolder({
           parentLocator: '',
           folderName,
-        }),
+        }, testUser),
       ).rejects.toThrow(new ConflictException('Folder already exists'));
     });
 
@@ -511,7 +524,7 @@ describe('FilesController', () => {
         filesController.createFolder({
           parentLocator: '',
           folderName: 'text1.txt',
-        }),
+        }, testUser),
       ).rejects.toThrow(new ConflictException('Folder already exists'));
     });
   });

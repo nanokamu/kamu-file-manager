@@ -101,7 +101,7 @@ describe('FilesService upload validation', () => {
       filesService.upload('', 'test.txt', req, {
         ...defaultUploadQuery,
         size: 5,
-      }),
+      }, 'default'),
     ).rejects.toThrow(
       /Content-Length \(10\) does not match declared size \(5\)/,
     );
@@ -116,7 +116,7 @@ describe('FilesService upload validation', () => {
       filesService.upload('', 'test.txt', req, {
         ...defaultUploadQuery,
         size: 5,
-      }),
+      }, 'default'),
     ).rejects.toThrow(/Upload exceeds declared size/);
 
     expect(uploadMock).toHaveBeenCalledTimes(1);
@@ -129,7 +129,7 @@ describe('FilesService upload validation', () => {
       filesService.upload('', 'test.txt', req, {
         ...defaultUploadQuery,
         size: 5,
-      }),
+      }, 'default'),
     ).rejects.toThrow(/Uploaded size mismatch/);
 
     expect(uploadMock).toHaveBeenCalledTimes(1);
@@ -141,7 +141,7 @@ describe('FilesService upload validation', () => {
     await filesService.upload('', 'test.txt', req, {
       ...defaultUploadQuery,
       size: 5,
-    });
+    }, 'default');
 
     expect(uploadMock).toHaveBeenCalledTimes(1);
   });
@@ -228,7 +228,7 @@ describe('FilesService downloadZip size limit', () => {
 
     const result = await filesService.downloadZip({
       locators: ['small.txt'],
-    });
+    }, 'default');
 
     expect(result.archiveName).toBe('archive.zip');
     expect(downloadMock).toHaveBeenCalledWith('small.txt');
@@ -299,7 +299,7 @@ describe('FilesService downloadZip size limit', () => {
 
     const result = await filesService.downloadZip({
       locators,
-    });
+    }, 'default');
 
     expect(result.archiveName).toBe('archive.zip');
     expect(downloadMock).toHaveBeenCalledTimes(locators.length);
@@ -319,7 +319,7 @@ describe('FilesService downloadZip size limit', () => {
     await expect(
       filesService.downloadZip({
         locators: ['large.txt'],
-      }),
+      }, 'default'),
     ).rejects.toThrow(
       new BadRequestException(
         `Total download size exceeds maximum of ${MAX_ZIP_DOWNLOAD_SIZE_BYTES} bytes`,
@@ -377,7 +377,7 @@ describe('FilesService downloadZip size limit', () => {
     await expect(
       filesService.downloadZip({
         locators: locators.slice(0, 3),
-      }),
+      }, 'default'),
     ).rejects.toThrow(
       new BadRequestException(
         `Total download size exceeds maximum of ${MAX_ZIP_DOWNLOAD_SIZE_BYTES} bytes`,
@@ -449,7 +449,7 @@ describe('FilesService downloadZip size limit', () => {
     await expect(
       filesService.downloadZip({
         folderLocators: ['folder_01'],
-      }),
+      }, 'default'),
     ).rejects.toThrow(
       new BadRequestException(
         `Total download size exceeds maximum of ${MAX_ZIP_DOWNLOAD_SIZE_BYTES} bytes`,
@@ -480,7 +480,7 @@ describe('FilesService downloadZip size limit', () => {
     await expect(
       filesService.downloadZip({
         folderLocators: ['folder'],
-      }),
+      }, 'default'),
     ).rejects.toThrow(
       new BadRequestException(
         `Total download size exceeds maximum of ${MAX_ZIP_DOWNLOAD_SIZE_BYTES} bytes`,
@@ -499,7 +499,7 @@ describe('FilesService downloadZip size limit', () => {
     await expect(
       filesService.downloadZip({
         locators: ['unknown.txt'],
-      }),
+      }, 'default'),
     ).rejects.toThrow(new BadRequestException('File size unavailable'));
   });
 });
@@ -560,7 +560,7 @@ describe('FilesService downloadZipFromLocators', () => {
       toListEntry(toFileResource('folder/nested.txt', 7, '2024-01-01')),
     ]);
 
-    await filesService.downloadZipFromLocators(['folder'], 'archive.zip');
+    await filesService.downloadZipFromLocators(['folder'], 'archive.zip', 'default');
 
     expect(downloadZipSpy).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -602,6 +602,7 @@ describe('FilesService downloadZipFromLocators', () => {
     await filesService.downloadZipFromLocators(
       ['outsider1.txt', 'outsider2.txt', 'nestfolder'],
       'archive.zip',
+      'default',
     );
 
     expect(downloadZipSpy).toHaveBeenCalledWith(
@@ -688,6 +689,7 @@ describe('FilesService compressLocatorsToZipFile', () => {
       '',
       ['a.txt', 'b.txt'],
       'archive.zip',
+      'default',
     );
 
     expect(result).toEqual({
@@ -725,6 +727,7 @@ describe('FilesService compressLocatorsToZipFile', () => {
       '',
       ['a.txt'],
       'archive.zip',
+      'default',
     );
 
     expect(result.savedName).toMatch(/^archive_\d{8}-\d{6}\.zip$/);
@@ -761,6 +764,7 @@ describe('FilesService compressLocatorsToZipFile', () => {
       '',
       ['folder'],
       'archive.zip',
+      'default',
     );
 
     expect(downloadZipSpy).toHaveBeenCalledWith(
@@ -806,6 +810,7 @@ describe('FilesService compressLocatorsToZipFile', () => {
       '',
       ['outsider1.txt', 'outsider2.txt', 'nestfolder'],
       'archive.zip',
+      'default',
     );
 
     expect(downloadZipSpy).toHaveBeenCalledWith(

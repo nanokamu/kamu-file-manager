@@ -22,6 +22,7 @@ import {
   createTestUsersConfig,
   createTestUsersTempDir,
   loginForTest,
+  TEST_USER,
 } from './helpers/users.fixture';
 
 function isZipBuffer(buffer: Buffer): boolean {
@@ -73,7 +74,7 @@ describe('FilesController (e2e)', () => {
     authed = authedRequest(app, accessToken);
 
     storagePathService = moduleFixture.get(StoragePathService);
-    rootDataDir = storagePathService.resolveStoragePath();
+    rootDataDir = storagePathService.resolveStoragePath(undefined, TEST_USER.id);
 
     if (existsSync(rootDataDir)) {
       clearDefaultStorageFixture(rootDataDir);

@@ -35,6 +35,7 @@ export class AddonService {
 
   async addonDownloadAsZip(
     dto: AddonDownloadAsZipDto,
+    userId: string,
   ): Promise<AddonEnvelopeResult> {
     if (dto.archiveType !== 'zip') {
       throw new BadRequestException({
@@ -46,11 +47,13 @@ export class AddonService {
     return this.buildZipEnvelope(
       { locators: dto.locators, archiveName: dto.archiveName },
       'addonDownloadAsZip completed',
+      userId,
     );
   }
 
   async addonCompressAsZip(
     dto: AddonCompressAsZipDto,
+    userId: string,
   ): Promise<ReturnTemplateMessage> {
     const parentLocator = assertSameParentLevel(dto.locators);
     const saveResult: CompressLocatorsToZipFileResult =
@@ -58,6 +61,7 @@ export class AddonService {
         parentLocator,
         dto.locators,
         dto.archiveName,
+        userId,
       );
 
     return {
@@ -69,10 +73,12 @@ export class AddonService {
   private async buildZipEnvelope(
     dto: { locators: string[]; archiveName: string },
     message: string,
+    userId: string,
   ): Promise<AddonEnvelopeResult> {
     const result = await this.filesService.downloadZipFromLocators(
       dto.locators,
       dto.archiveName,
+      userId,
     );
 
     if (result.size > ADDON_MAX_ENVELOPE_BYTES) {

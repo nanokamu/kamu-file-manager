@@ -59,21 +59,21 @@ export class FilesService {
   ) { }
 
   /** Legacy flat file list (all files recursively). */
-  async listFiles(userId: string = 'default'): Promise<string[]> {
+  async listFiles(userId: string): Promise<string[]> {
     const storage = this.storageAdapter.forUser(userId);
     const files: string[] = [];
     await this.collectAllFilePaths(storage, undefined, files);
     return files.sort();
   }
 
-  list(locator?: string, userId: string = 'default'): Promise<UnifiedResource[]> {
+  list(locator: string | undefined, userId: string): Promise<UnifiedResource[]> {
     const storage = this.storageAdapter.forUser(userId);
     return storage.list(locator);
   }
 
   async download(
     locator: string,
-    userId: string = 'default',
+    userId: string,
   ): Promise<
     DownloadResult & {
       resource: UnifiedResource;
@@ -98,7 +98,7 @@ export class FilesService {
     fileName: string,
     req: Request,
     query: UploadFileQueryDto,
-    userId: string = 'default',
+    userId: string,
   ): Promise<UnifiedResource> {
     const storage = this.storageAdapter.forUser(userId);
     const expectedBytes = Number(query.size);
@@ -119,7 +119,7 @@ export class FilesService {
     );
   }
 
-  delete(locator: string, userId: string = 'default'): Promise<void> {
+  delete(locator: string, userId: string): Promise<void> {
     const storage = this.storageAdapter.forUser(userId);
     return storage.delete(locator);
   }
@@ -127,7 +127,7 @@ export class FilesService {
   createFolder(
     parentLocator: string,
     folderName: string,
-    userId: string = 'default',
+    userId: string,
   ): Promise<UnifiedResource> {
     const storage = this.storageAdapter.forUser(userId);
     return storage.createFolder(parentLocator, folderName);
@@ -136,8 +136,8 @@ export class FilesService {
   copy(
     sourceLocator: string,
     destinationLocator: string,
+    userId: string,
     options?: CopyOptions,
-    userId: string = 'default',
   ): Promise<UnifiedResource> {
     const storage = this.storageAdapter.forUser(userId);
     return storage.copy(sourceLocator, destinationLocator, options);
@@ -146,14 +146,14 @@ export class FilesService {
   move(
     sourceLocator: string,
     destinationLocator: string,
+    userId: string,
     options?: MoveOptions,
-    userId: string = 'default',
   ): Promise<UnifiedResource> {
     const storage = this.storageAdapter.forUser(userId);
     return storage.move(sourceLocator, destinationLocator, options);
   }
 
-  getMetadata(locator: string, userId: string = 'default'): Promise<UnifiedResource> {
+  getMetadata(locator: string, userId: string): Promise<UnifiedResource> {
     const storage = this.storageAdapter.forUser(userId);
     return storage.getMetadata(locator);
   }
@@ -161,7 +161,7 @@ export class FilesService {
   async downloadZipFromLocators(
     locators: string[],
     archiveName: string,
-    userId: string = 'default',
+    userId: string,
   ): Promise<DownloadZipResult> {
     const { fileLocators, folderLocators, folderZipPaths } =
       await this.partitionLocatorsForZip(locators, userId);
@@ -181,7 +181,7 @@ export class FilesService {
     parentLocator: string,
     locators: string[],
     archiveName: string,
-    userId: string = 'default',
+    userId: string,
   ): Promise<CompressLocatorsToZipFileResult> {
     const storage = this.storageAdapter.forUser(userId);
 
@@ -241,7 +241,7 @@ export class FilesService {
    */
   async downloadZip(
     dto: DownloadZipDto,
-    userId: string = 'default',
+    userId: string,
   ): Promise<DownloadZipResult> {
     const storage = this.storageAdapter.forUser(userId);
     const locators = dto.locators ?? [];
@@ -346,7 +346,7 @@ export class FilesService {
    */
   private async partitionLocatorsForZip(
     locators: string[],
-    userId: string = 'default',
+    userId: string,
   ): Promise<{
     fileLocators: string[];
     folderLocators: string[];

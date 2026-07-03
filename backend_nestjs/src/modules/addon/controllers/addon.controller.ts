@@ -25,6 +25,8 @@ import {
   ReturnStatus,
 } from '../config/addon.types';
 import { AddonCallWithRedirectDto } from '../dto/addon-call-with-redirect.dto';
+import { CurrentUser } from '../../../shared/decorators/current-user.decorator';
+import type { AuthenticatedUser } from '../../users/interfaces/user.interface';
 
 @Controller()
 export class AddonController {
@@ -41,9 +43,10 @@ export class AddonController {
   async addonDownloadAsZip(
     @Body() dto: AddonDownloadAsZipDto,
     @Res({ passthrough: true }) res: Response,
+    @CurrentUser() user: AuthenticatedUser,
   ): Promise<StreamableFile> {
     const { stream, contentLength } =
-      await this.addonService.addonDownloadAsZip(dto);
+      await this.addonService.addonDownloadAsZip(dto, user.id);
 
     res.set({
       'Content-Type': ADDON_ENVELOPE_CONTENT_TYPE,
@@ -60,8 +63,9 @@ export class AddonController {
   @HttpCode(200)
   addonCompressAsZip(
     @Body() dto: AddonCompressAsZipDto,
+    @CurrentUser() user: AuthenticatedUser,
   ): Promise<ReturnTemplateMessage> {
-    return this.addonService.addonCompressAsZip(dto);
+    return this.addonService.addonCompressAsZip(dto, user.id);
   }
 
   @Post('addonCallWithBlankLocator')

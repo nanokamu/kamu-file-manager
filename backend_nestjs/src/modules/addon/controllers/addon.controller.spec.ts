@@ -13,6 +13,9 @@ import {
   serializeEnvelopeMetadata,
 } from '../utils/addon-envelope.util';
 import { AddonController } from './addon.controller';
+import type { AuthenticatedUser } from '../../users/interfaces/user.interface';
+
+const testUser: AuthenticatedUser = { id: 'test_user', username: 'tester' };
 
 async function readStreamableFile(file: StreamableFile): Promise<Buffer> {
   const stream = file.getStream();
@@ -101,9 +104,12 @@ describe('AddonController', () => {
         currentFolderLocator: 'projects',
       };
 
-      const file = await addonController.addonDownloadAsZip(dto, res);
+      const file = await addonController.addonDownloadAsZip(dto, res, testUser);
 
-      expect(addonService.addonDownloadAsZip).toHaveBeenCalledWith(dto);
+      expect(addonService.addonDownloadAsZip).toHaveBeenCalledWith(
+        dto,
+        testUser.id,
+      );
       expect(file).toBeInstanceOf(StreamableFile);
       expect(set).toHaveBeenCalledWith({
         'Content-Type': ADDON_ENVELOPE_CONTENT_TYPE,
@@ -124,9 +130,12 @@ describe('AddonController', () => {
         currentFolderLocator: '',
       };
 
-      const result = await addonController.addonCompressAsZip(dto);
+      const result = await addonController.addonCompressAsZip(dto, testUser);
 
-      expect(addonService.addonCompressAsZip).toHaveBeenCalledWith(dto);
+      expect(addonService.addonCompressAsZip).toHaveBeenCalledWith(
+        dto,
+        testUser.id,
+      );
       expect(result).toEqual({
         status: ReturnStatus.Ok,
         message: 'Created archive.zip in root',
