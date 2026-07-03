@@ -32,6 +32,7 @@ Kamu File Manager is a plug-and-play, lightweight, web-based file manager design
 2. Activate "open in container" command to activate devcontainer environment.
 3. Install dependecies on frontend and backend using pnpm install.
 4. Run both frontend and backend server to access Kamu File Manager via web browser.
+5. Backend users are defined in a JSON config file (`users.config.json` or `USERS_CONFIG_PATH`); store bcrypt password hashes, not plaintext passwords.
 
 
 

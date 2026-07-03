@@ -1,3 +1,5 @@
+import { getToken } from '../features/user/utils/auth-token.util';
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '/api';
 
 export class ApiError extends Error {
@@ -52,12 +54,16 @@ export async function apiRequest<T>(
   init: RequestInit = {},
   query?: Record<string, string | number | boolean | undefined>,
 ): Promise<T> {
+  const token = getToken();
+  const headers = new Headers(init.headers);
+  headers.set('Accept', 'application/json');
+  if (token) {
+    headers.set('Authorization', `Bearer ${token}`);
+  }
+
   const response = await fetch(buildUrl(path, query), {
     ...init,
-    headers: {
-      Accept: 'application/json',
-      ...init.headers,
-    },
+    headers,
   });
 
   if (!response.ok) {
