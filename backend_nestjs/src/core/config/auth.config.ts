@@ -1,5 +1,9 @@
 export const AUTH_CONFIG = 'AUTH_CONFIG';
 
+// 1h — 1 hour
+// 7d — 7 days
+// 30m — 30 minutes
+// 3600 — 3600 seconds (numeric string)
 const DEFAULT_JWT_EXPIRES_IN = '1h';
 const DEV_JWT_SECRET = 'dev-only-jwt-secret-change-in-production';
 
